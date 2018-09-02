@@ -1,0 +1,3 @@
+# Paataka
+
+A simple newsreader
