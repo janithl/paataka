@@ -11,8 +11,6 @@ func main() {
 
 	fmt.Printf("Paataka %s\n", appVersion)
 
-	p := persist{}
-	p.OpenFile()
-	p.WriteFile(appState{Timestamp: time.Now(), AppVersion: appVersion})
-	defer p.CloseFile()
+	appState := AppState{Timestamp: time.Now(), AppVersion: appVersion}
+	appState.Store()
 }
