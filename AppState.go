@@ -21,7 +21,7 @@ func (a *AppState) AddPublication(pub common.Publication) {
 
 // Store stores application state to persistance
 func (a *AppState) Store() {
-	jsonContent, _ := json.Marshal(a)
+	jsonContent, _ := json.MarshalIndent(a, "", "    ")
 
 	p := persist{}
 	p.WriteFile("./data/appState.json", string(jsonContent))
