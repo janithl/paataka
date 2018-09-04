@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -64,8 +65,8 @@ func (p *Publication) Fetch() {
 
 	for _, post := range feed.Posts {
 		p.AddPost(post)
+		log.Printf("Added article: %s", post.Title)
 	}
 
 	p.accessedAt = time.Now()
-	fmt.Println(p)
 }

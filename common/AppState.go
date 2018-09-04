@@ -1,21 +1,19 @@
-package main
+package common
 
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/janithl/paataka/common"
 )
 
 // AppState struct to hold application state
 type AppState struct {
 	Timestamp    time.Time
 	AppVersion   string
-	Publications []common.Publication
+	Publications []Publication
 }
 
 // AddPublication adds a publication to the app
-func (a *AppState) AddPublication(pub common.Publication) {
+func (a *AppState) AddPublication(pub Publication) {
 	a.Publications = append(a.Publications, pub)
 }
 
@@ -23,6 +21,6 @@ func (a *AppState) AddPublication(pub common.Publication) {
 func (a *AppState) Store() {
 	jsonContent, _ := json.MarshalIndent(a, "", "    ")
 
-	p := persist{}
-	p.WriteFile("./data/appState.json", string(jsonContent))
+	p := Persist{}
+	p.WriteFile("./data/AppState.json", string(jsonContent))
 }
