@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/janithl/paataka/database"
@@ -16,6 +17,6 @@ func main() {
 	ps := domain.NewPublicationServiceImpl(pd)
 	pc := web.NewPublicationController(ps)
 
-	http.Handle("/publications", pc)
-	http.ListenAndServe(":8080", nil)
+	http.Handle("/publications/", pc)
+	log.Fatal(http.ListenAndServe("localhost:8067", nil))
 }

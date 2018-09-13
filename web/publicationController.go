@@ -3,6 +3,8 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/janithl/paataka/domain"
 )
@@ -20,5 +22,12 @@ func NewPublicationController(ps domain.PublicationService) *PublicationControll
 }
 
 func (pc *PublicationController) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Hello World")
+	id, err := strconv.Atoi(strings.TrimPrefix(req.URL.Path, "/publications/"))
+	if err != nil {
+		fmt.Fprint(w, "Publication ID should be a number!")
+		return
+	}
+
+	publication := pc.service.RetrievePublication(id)
+	fmt.Fprint(w, publication)
 }
