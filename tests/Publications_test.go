@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	"github.com/janithl/paataka/database"
 	"github.com/janithl/paataka/domain"
 )
 
