@@ -1,6 +1,10 @@
 package tests
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/janithl/paataka/domain"
+)
 
 func TestPublications(t *testing.T) {
 	version := "Mock SQLRepository v1.0"
