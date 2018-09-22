@@ -19,10 +19,10 @@ func (p *PublicationServiceImpl) GetRepositoryVersion() string {
 
 // Add adds a new Publication
 func (p *PublicationServiceImpl) Add(pub Publication) string {
-	return "pub-uuid"
+	return p.repository.Add(pub)
 }
 
 // ListAll returns all the publications in a Map
 func (p *PublicationServiceImpl) ListAll() map[string]Publication {
-	return make(map[string]Publication)
+	return p.repository.ListAll()
 }
