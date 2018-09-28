@@ -4,5 +4,7 @@ package domain
 type PublicationService interface {
 	GetRepositoryVersion() string
 	Add(Publication) string
+	AddPost(string, Post)
 	ListAll() map[string]Publication
+	Find(string) (Publication, error)
 }

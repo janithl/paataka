@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/janithl/paataka/database"
@@ -36,7 +35,58 @@ func TestPublications(t *testing.T) {
 		got := service.ListAll()
 		want := publications
 
-		if !reflect.DeepEqual(got, want) {
+		ids := [3]string{"pub-001", "pub-002", "pub-003"}
+		for _, id := range ids {
+			if got[id].ID != want[id].ID {
+				t.Errorf("got '%s' want '%s'", got[id].ID, want[id].ID)
+			}
+			if got[id].Title != want[id].Title {
+				t.Errorf("got '%s' want '%s'", got[id].Title, want[id].Title)
+			}
+			if got[id].URL != want[id].URL {
+				t.Errorf("got '%s' want '%s'", got[id].URL, want[id].URL)
+			}
+		}
+	})
+
+	t.Run("Finding nonexistent publication should fail", func(t *testing.T) {
+		if _, err := service.Find("not-there"); err == nil {
+			t.Errorf("got '%s' want '%s'", err, domain.ErrorPublicationNotFound)
+		}
+	})
+
+	t.Run("Finding existing publication and update it", func(t *testing.T) {
+		// Initial add
+		publication := domain.Publication{ID: "pub-010", Title: "Greenland Business Digest", URL: "https://gbd.org"}
+		service.Add(publication)
+
+		// Then find
+		pub, err := service.Find("pub-010")
+		if err != nil {
+			t.Error(err)
+		}
+
+		// Verify
+		got := pub.Title
+		want := publication.Title
+		if got != want {
+			t.Errorf("got '%s' want '%s'", got, want)
+		}
+
+		// Then update title, add (update) on service
+		publication.Title = "Greenland Business Standard"
+		service.Add(publication)
+
+		// Find
+		pub, err = service.Find("pub-010")
+		if err != nil {
+			t.Error(err)
+		}
+
+		// Verify
+		got = pub.Title
+		want = publication.Title
+		if got != want {
 			t.Errorf("got '%s' want '%s'", got, want)
 		}
 	})
