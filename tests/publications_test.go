@@ -25,9 +25,9 @@ func TestPublications(t *testing.T) {
 	t.Run("Add 3 publications and then list them all", func(t *testing.T) {
 		publications := make(map[string]domain.Publication)
 
-		publications["pub-001"] = domain.Publication{ID: "pub-001"}
-		publications["pub-002"] = domain.Publication{ID: "pub-002"}
-		publications["pub-003"] = domain.Publication{ID: "pub-003"}
+		publications["pub-001"] = domain.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+		publications["pub-002"] = domain.Publication{ID: "pub-002", Title: "Ben's Thoughts", URL: "https://ben-bert.me"}
+		publications["pub-003"] = domain.Publication{ID: "pub-003", Title: "Cambrian Technical Group", URL: "http://blog.cambrian.tech"}
 
 		service.Add(publications["pub-001"])
 		service.Add(publications["pub-002"])
