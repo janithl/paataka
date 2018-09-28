@@ -9,8 +9,8 @@ import (
 )
 
 func TestPublications(t *testing.T) {
-	version := "Mock SQLRepository v1.0"
-	repo := database.NewSQLPublicationRepository(version)
+	version := "Mock InMemoryRepository v1.0"
+	repo := database.NewInMemoryPublicationRepository(version)
 	service := domain.NewPublicationServiceImpl(repo)
 
 	t.Run("Check Version", func(t *testing.T) {
