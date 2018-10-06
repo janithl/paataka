@@ -1,18 +1,18 @@
 package database
 
-import "github.com/janithl/paataka/domain"
+import "github.com/janithl/paataka/entities"
 
 // SQLPublicationRepository is an implementation of Posts repository currently using an in-memory store
 type SQLPublicationRepository struct {
 	version      string
-	publications map[string]domain.Publication
+	publications map[string]entities.Publication
 }
 
 // NewSQLPublicationRepository returns a new SQLPublicationRepository
 func NewSQLPublicationRepository(version string) *SQLPublicationRepository {
 	return &SQLPublicationRepository{
 		version:      version,
-		publications: make(map[string]domain.Publication),
+		publications: make(map[string]entities.Publication),
 	}
 }
 
@@ -22,12 +22,12 @@ func (s *SQLPublicationRepository) GetVersion() string {
 }
 
 // Add adds a new Publication
-func (s *SQLPublicationRepository) Add(pub domain.Publication) string {
+func (s *SQLPublicationRepository) Add(pub entities.Publication) string {
 	s.publications[pub.ID] = pub
 	return pub.ID
 }
 
 // ListAll returns all the publications in a Map
-func (s *SQLPublicationRepository) ListAll() map[string]domain.Publication {
+func (s *SQLPublicationRepository) ListAll() map[string]entities.Publication {
 	return s.publications
 }

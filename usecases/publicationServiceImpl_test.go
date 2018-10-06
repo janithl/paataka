@@ -1,16 +1,17 @@
-package domain_test
+package usecases_test
 
 import (
 	"reflect"
 	"testing"
 
 	"github.com/janithl/paataka/database"
-	"github.com/janithl/paataka/domain"
+	"github.com/janithl/paataka/entities"
+	"github.com/janithl/paataka/usecases"
 )
 
-func setupService(version string) *domain.PublicationServiceImpl {
+func setupService(version string) *usecases.PublicationServiceImpl {
 	repo := database.NewInMemoryPublicationRepository(version)
-	return domain.NewPublicationServiceImpl(repo)
+	return usecases.NewPublicationServiceImpl(repo)
 }
 
 const version string = "Mock InMemoryRepository v1.0"
@@ -28,11 +29,11 @@ func TestPublicationVersion(t *testing.T) {
 
 func TestPublicationAddAndList(t *testing.T) {
 	service := setupService(version)
-	publications := make(map[string]domain.Publication)
+	publications := make(map[string]entities.Publication)
 
-	publications["pub-001"] = domain.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
-	publications["pub-002"] = domain.Publication{ID: "pub-002", Title: "Ben's Thoughts", URL: "https://ben-bert.me"}
-	publications["pub-003"] = domain.Publication{ID: "pub-003", Title: "Cambrian Technical Group", URL: "http://blog.cambrian.tech"}
+	publications["pub-001"] = entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	publications["pub-002"] = entities.Publication{ID: "pub-002", Title: "Ben's Thoughts", URL: "https://ben-bert.me"}
+	publications["pub-003"] = entities.Publication{ID: "pub-003", Title: "Cambrian Technical Group", URL: "http://blog.cambrian.tech"}
 
 	service.Add(publications["pub-001"])
 	service.Add(publications["pub-002"])
@@ -58,7 +59,7 @@ func TestPublicationAddAndList(t *testing.T) {
 func TestPublicationFindFail(t *testing.T) {
 	service := setupService(version)
 	if _, err := service.Find("not-there"); err == nil {
-		t.Errorf("got '%s' want '%s'", err, domain.ErrorPublicationNotFound)
+		t.Errorf("got '%s' want '%s'", err, usecases.ErrPublicationNotFound)
 	}
 }
 
@@ -66,7 +67,7 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 	service := setupService(version)
 
 	// Initial add
-	publication := domain.Publication{ID: "pub-010", Title: "Greenland Business Digest", URL: "https://gbd.org"}
+	publication := entities.Publication{ID: "pub-010", Title: "Greenland Business Digest", URL: "https://gbd.org"}
 	service.Add(publication)
 
 	// Then find
@@ -104,14 +105,14 @@ func TestPublicationPostAddAndListAll(t *testing.T) {
 	service := setupService(version)
 
 	// create new publication
-	publication := domain.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	publication := entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
 	service.Add(publication)
 
 	// create a map of posts
-	posts := make(map[string]domain.Post)
-	posts["100-001"] = domain.Post{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
-	posts["100-002"] = domain.Post{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
-	posts["100-003"] = domain.Post{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
+	posts := make(map[string]entities.Post)
+	posts["100-001"] = entities.Post{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
+	posts["100-002"] = entities.Post{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
+	posts["100-003"] = entities.Post{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
 
 	// add them one-by-one to publication, checking for errors
 	if err := service.AddPost("pub-001", posts["100-001"]); err != nil {
@@ -143,8 +144,24 @@ func TestPublicationPostAddAndListAll(t *testing.T) {
 func TestPublicationPostFindFail(t *testing.T) {
 	service := setupService(version)
 
-	post := domain.Post{ID: "100-008", Title: "Heyya Failure", URL: "https://bigwig.com/blog/heyya"}
+	post := entities.Post{ID: "100-008", Title: "Heyya Failure", URL: "https://bigwig.com/blog/heyya"}
 	if err := service.AddPost("pub-404", post); err == nil {
-		t.Errorf("got '%s' want '%s'", err, domain.ErrorPublicationNotFound)
+		t.Errorf("got '%s' want '%s'", err, usecases.ErrPublicationNotFound)
 	}
 }
+
+/*
+	given
+		3 publications in the repository:
+			pub 1 - fetched 1 hour ago
+			pub 2 - fetched 30 minutes ago
+			pub 3 - fetched 3 hours ago
+	and
+		fetch older than is 1 hour
+	and
+		fetch at a time limit is 10
+
+	when GetFetchable is called
+
+	then pub 1 and pub 3 should be returned
+*/
