@@ -1,7 +1,6 @@
 package usecases_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/janithl/paataka/database"
@@ -11,10 +10,10 @@ import (
 
 /** MockFeedReader */
 type MockFeedReader struct {
-	Posts map[string]entities.Post
+	Posts []entities.Post
 }
 
-func (m MockFeedReader) Read(url string) map[string]entities.Post {
+func (m MockFeedReader) Read(url string) []entities.Post {
 	return m.Posts
 }
 
@@ -151,21 +150,19 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 	mockFeedReader := MockFeedReader{}
 
-	// create a map of posts
-	posts := make(map[string]entities.Post)
-	posts["100-001"] = entities.Post{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
-	posts["100-002"] = entities.Post{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
-	posts["100-003"] = entities.Post{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
-
-	// assign it to the mock FeedReader
-	mockFeedReader.Posts = posts
+	// create a slice of posts and assign it to the mock FeedReader
+	mockFeedReader.Posts = []entities.Post{
+		entities.Post{Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"},
+		entities.Post{Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"},
+		entities.Post{Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"},
+	}
 
 	// setup service
 	service := setupService(version, mockFeedReader)
 
 	// create new publication
-	publication := entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
-	service.Add(publication)
+	publication := entities.Publication{Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	publication.ID = service.Add(publication)
 
 	// fetch posts for the publication
 	service.FetchPublicationPosts(publication)
@@ -175,11 +172,18 @@ func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 		t.Error(err)
 	} else {
 		t.Run("Make sure all the posts have been added in...", func(t *testing.T) {
-			got := pub.Posts
-			want := posts
+			matches := 0
+			for _, wants := range mockFeedReader.Posts {
+				for _, gots := range pub.Posts {
+					if gots.Title == wants.Title && gots.URL == wants.URL {
+						t.Logf("Got '%s', want '%s'", gots, wants)
+						matches++
+					}
+				}
+			}
 
-			if !reflect.DeepEqual(got, want) {
-				t.Errorf("got '%s' want '%s'", got, want)
+			if matches != 3 {
+				t.Errorf("got '%d' matches, want 3", matches)
 			}
 		})
 	}

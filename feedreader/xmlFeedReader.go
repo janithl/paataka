@@ -25,8 +25,8 @@ type XMLFeedReader struct {
 }
 
 // Read is the read function
-func (x XMLFeedReader) Read(url string) map[string]entities.Post {
-	posts := map[string]entities.Post{}
+func (x XMLFeedReader) Read(url string) []entities.Post {
+	posts := []entities.Post{}
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -47,8 +47,8 @@ func (x XMLFeedReader) Read(url string) map[string]entities.Post {
 		return posts
 	}
 
-	for index, post := range feed.Items {
-		posts[string(index)] = entities.Post{Title: post.Title, URL: post.Link}
+	for _, post := range feed.Items {
+		posts = append(posts, entities.Post{Title: post.Title, URL: post.Link})
 	}
 
 	return posts
