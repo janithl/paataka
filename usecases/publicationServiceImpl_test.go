@@ -10,21 +10,30 @@ import (
 )
 
 /** MockFeedReader */
-type MockFeedReader struct{}
-
-func (m MockFeedReader) Read(url string) map[string]entities.Post {
-	return nil
+type MockFeedReader struct {
+	Posts map[string]entities.Post
 }
 
-func setupService(version string) *usecases.PublicationServiceImpl {
+func (m MockFeedReader) Read(url string) map[string]entities.Post {
+	return m.Posts
+}
+
+func setupService(version string, reader usecases.FeedReader) *usecases.PublicationServiceImpl {
 	repo := database.NewInMemoryPublicationRepository(version)
-	return usecases.NewPublicationServiceImpl(repo, MockFeedReader{})
+	return usecases.NewPublicationServiceImpl(repo, reader)
 }
 
 const version string = "Mock InMemoryRepository v1.0"
 
+var mockReader = MockFeedReader{Posts: nil}
+
+/*
+	given PublicationService version is Mock InMemoryRepository v1.0
+	when GetRepositoryVersion is called
+	then Mock InMemoryRepository v1.0 is returned
+*/
 func TestPublicationVersion(t *testing.T) {
-	service := setupService(version)
+	service := setupService(version, mockReader)
 
 	got := service.GetRepositoryVersion()
 	want := version
@@ -35,7 +44,7 @@ func TestPublicationVersion(t *testing.T) {
 }
 
 func TestPublicationAddAndList(t *testing.T) {
-	service := setupService(version)
+	service := setupService(version, mockReader)
 	publications := make(map[string]entities.Publication)
 
 	publications["pub-001"] = entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
@@ -63,15 +72,20 @@ func TestPublicationAddAndList(t *testing.T) {
 	}
 }
 
+/*
+	given PublicationService with no publications
+	when we try to find "pub-001"
+	then PublicationNotFound error is thrown
+*/
 func TestPublicationFindFail(t *testing.T) {
-	service := setupService(version)
-	if _, err := service.Find("not-there"); err == nil {
+	service := setupService(version, mockReader)
+	if _, err := service.Find("pub-001"); err == nil {
 		t.Errorf("got '%s' want '%s'", err, usecases.ErrPublicationNotFound)
 	}
 }
 
 func TestPublicationFindAndUpdate(t *testing.T) {
-	service := setupService(version)
+	service := setupService(version, mockReader)
 
 	// Initial add
 	publication := entities.Publication{ID: "pub-010", Title: "Greenland Business Digest", URL: "https://gbd.org"}
@@ -108,55 +122,6 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 	}
 }
 
-func TestPublicationPostAddAndListAll(t *testing.T) {
-	service := setupService(version)
-
-	// create new publication
-	publication := entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
-	service.Add(publication)
-
-	// create a map of posts
-	posts := make(map[string]entities.Post)
-	posts["100-001"] = entities.Post{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
-	posts["100-002"] = entities.Post{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
-	posts["100-003"] = entities.Post{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
-
-	// add them one-by-one to publication, checking for errors
-	if err := service.AddPost("pub-001", posts["100-001"]); err != nil {
-		t.Error(err)
-	}
-
-	if err := service.AddPost("pub-001", posts["100-002"]); err != nil {
-		t.Error(err)
-	}
-
-	if err := service.AddPost("pub-001", posts["100-003"]); err != nil {
-		t.Error(err)
-	}
-
-	// find the publication, checking for errors
-	if pub, err := service.Find(publication.ID); err != nil {
-		t.Error(err)
-	} else {
-		// make sure all the posts have been added in
-		got := pub.Posts
-		want := posts
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%s' want '%s'", got, want)
-		}
-	}
-}
-
-func TestPublicationPostFindFail(t *testing.T) {
-	service := setupService(version)
-
-	post := entities.Post{ID: "100-008", Title: "Heyya Failure", URL: "https://bigwig.com/blog/heyya"}
-	if err := service.AddPost("pub-404", post); err == nil {
-		t.Errorf("got '%s' want '%s'", err, usecases.ErrPublicationNotFound)
-	}
-}
-
 /*
 	given
 		3 publications in the repository:
@@ -172,3 +137,49 @@ func TestPublicationPostFindFail(t *testing.T) {
 
 	then pub 1 and pub 3 should be returned
 */
+
+/*
+	given publication is in repository:
+		{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	and publication's feed has 3 posts on it:
+		{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
+		{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
+		{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
+	when AddPublicationPosts is called on it
+	then the Posts should be added to the repository
+*/
+func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
+	mockFeedReader := MockFeedReader{}
+
+	// create a map of posts
+	posts := make(map[string]entities.Post)
+	posts["100-001"] = entities.Post{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
+	posts["100-002"] = entities.Post{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
+	posts["100-003"] = entities.Post{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
+
+	// assign it to the mock FeedReader
+	mockFeedReader.Posts = posts
+
+	// setup service
+	service := setupService(version, mockFeedReader)
+
+	// create new publication
+	publication := entities.Publication{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	service.Add(publication)
+
+	// fetch posts for the publication
+	service.FetchPublicationPosts(publication)
+
+	// find the publication, checking for errors
+	if pub, err := service.Find(publication.ID); err != nil {
+		t.Error(err)
+	} else {
+		// make sure all the posts have been added in
+		got := pub.Posts
+		want := posts
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got '%s' want '%s'", got, want)
+		}
+	}
+}

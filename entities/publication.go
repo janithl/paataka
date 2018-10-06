@@ -12,3 +12,12 @@ type Publication struct {
 	FetchedAt time.Time
 	UpdatedAt time.Time
 }
+
+// AddPost adds a Post to the Publication
+func (p *Publication) AddPost(post Post) {
+	if p.Posts == nil {
+		p.Posts = map[string]Post{}
+	}
+
+	p.Posts[post.ID] = post
+}

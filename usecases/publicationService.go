@@ -6,7 +6,7 @@ import "github.com/janithl/paataka/entities"
 type PublicationService interface {
 	GetRepositoryVersion() string
 	Add(entities.Publication) string
-	AddPost(string, entities.Post)
 	ListAll() map[string]entities.Publication
 	Find(string) (entities.Publication, error)
+	FetchPublicationPosts(entities.Publication) error
 }

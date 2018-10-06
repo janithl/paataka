@@ -23,23 +23,7 @@ func (p *PublicationServiceImpl) GetRepositoryVersion() string {
 
 // Add adds a new Publication
 func (p *PublicationServiceImpl) Add(pub entities.Publication) string {
-	if len(pub.Posts) == 0 {
-		pub.Posts = make(map[string]entities.Post)
-	}
-
 	return p.repository.Add(pub)
-}
-
-// AddPost adds a new Post to the Publication
-func (p *PublicationServiceImpl) AddPost(id string, post entities.Post) error {
-	if pub, err := p.Find(id); err == nil {
-		pub.Posts[post.ID] = post
-		p.Add(pub)
-
-		return nil
-	}
-
-	return ErrPublicationNotFound
 }
 
 // ListAll returns all the publications in a Map
@@ -54,4 +38,15 @@ func (p *PublicationServiceImpl) Find(id string) (entities.Publication, error) {
 	}
 
 	return entities.Publication{}, ErrPublicationNotFound
+}
+
+// FetchPublicationPosts fetches Publication posts from the feed and adds it to the publication
+func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication) error {
+	posts := p.reader.Read(pub.URL)
+	for _, post := range posts {
+		pub.AddPost(post)
+	}
+
+	p.Add(pub)
+	return nil
 }
