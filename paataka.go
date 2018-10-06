@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/janithl/paataka/database"
+	"github.com/janithl/paataka/feedreader"
 	"github.com/janithl/paataka/ui"
 	"github.com/janithl/paataka/usecases"
 )
@@ -11,7 +12,8 @@ func main() {
 	repo := database.NewSQLPublicationRepository(paatakaVersion)
 	defer repo.Persist()
 
-	service := usecases.NewPublicationServiceImpl(repo, nil)
+	reader := feedreader.XMLFeedReader{}
+	service := usecases.NewPublicationServiceImpl(repo, reader)
 
 	cli := ui.CLI{PublicationService: service}
 	cli.GetInput()

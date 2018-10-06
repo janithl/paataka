@@ -28,7 +28,7 @@ func (c *CLI) GetInput() {
 	options := []option{
 		option{"Add Publication", c.addPublication},
 		option{"List All Publications", c.listAll},
-		option{"Fetch All Posts", func() {}},
+		option{"Fetch All Posts", c.fetchAll},
 	}
 
 	for {
@@ -75,5 +75,16 @@ func (c *CLI) listAll() {
 
 	for _, pub := range pubs {
 		fmt.Printf("%s (%s)\n", pub.Title, pub.URL)
+	}
+}
+
+func (c *CLI) fetchAll() {
+	pubs := c.PublicationService.ListAll()
+	for _, pub := range pubs {
+		fmt.Printf("\nFetching %s (%s)\n", pub.Title, pub.URL)
+		err := c.PublicationService.FetchPublicationPosts(pub)
+		if err != nil {
+			fmt.Println("Error: ", err)
+		}
 	}
 }

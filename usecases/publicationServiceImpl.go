@@ -63,6 +63,8 @@ func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication)
 		if post.ID == "" {
 			post.ID = p.generateID()
 		}
+		post.AddedAt = time.Now()
+		post.UpdatedAt = time.Now()
 
 		pub.AddPost(post)
 	}
