@@ -1,6 +1,12 @@
 package usecases
 
-import "github.com/janithl/paataka/entities"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+
+	"github.com/janithl/paataka/entities"
+)
 
 // PublicationServiceImpl is an implementation of the PublicationService
 type PublicationServiceImpl struct {
@@ -23,6 +29,10 @@ func (p *PublicationServiceImpl) GetRepositoryVersion() string {
 
 // Add adds a new Publication
 func (p *PublicationServiceImpl) Add(pub entities.Publication) string {
+	if pub.ID == "" {
+		pub.ID = p.generateID()
+	}
+
 	return p.repository.Add(pub)
 }
 
@@ -44,9 +54,18 @@ func (p *PublicationServiceImpl) Find(id string) (entities.Publication, error) {
 func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication) error {
 	posts := p.reader.Read(pub.URL)
 	for _, post := range posts {
+		if post.ID == "" {
+			post.ID = p.generateID()
+		}
+
 		pub.AddPost(post)
 	}
 
+	pub.FetchedAt = time.Now()
 	p.Add(pub)
 	return nil
+}
+
+func (p *PublicationServiceImpl) generateID() string {
+	return fmt.Sprintf("%x-%x-%x", rand.Uint32(), rand.Uint32(), rand.Uint32())
 }

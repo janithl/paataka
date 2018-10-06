@@ -145,7 +145,7 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 		{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
 		{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
 		{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
-	when AddPublicationPosts is called on it
+	when FetchPublicationPosts is called on it
 	then the Posts should be added to the repository
 */
 func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
@@ -174,12 +174,13 @@ func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 	if pub, err := service.Find(publication.ID); err != nil {
 		t.Error(err)
 	} else {
-		// make sure all the posts have been added in
-		got := pub.Posts
-		want := posts
+		t.Run("Make sure all the posts have been added in...", func(t *testing.T) {
+			got := pub.Posts
+			want := posts
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got '%s' want '%s'", got, want)
-		}
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("got '%s' want '%s'", got, want)
+			}
+		})
 	}
 }

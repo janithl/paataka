@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/janithl/paataka/database"
-	"github.com/janithl/paataka/domain"
+	"github.com/janithl/paataka/ui"
+	"github.com/janithl/paataka/usecases"
 )
 
 func main() {
 	paatakaVersion := "Paataka v1.0"
 	repo := database.NewSQLPublicationRepository(paatakaVersion)
-	service := domain.NewPublicationServiceImpl(repo)
+	service := usecases.NewPublicationServiceImpl(repo, nil)
 
-	fmt.Println(service.GetRepositoryVersion())
+	cli := ui.CLI{PublicationService: service}
+	cli.GetInput()
 }
