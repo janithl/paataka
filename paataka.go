@@ -9,6 +9,8 @@ import (
 func main() {
 	paatakaVersion := "Paataka v1.0"
 	repo := database.NewSQLPublicationRepository(paatakaVersion)
+	defer repo.Persist()
+
 	service := usecases.NewPublicationServiceImpl(repo, nil)
 
 	cli := ui.CLI{PublicationService: service}

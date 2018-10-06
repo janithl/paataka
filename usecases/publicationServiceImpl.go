@@ -12,13 +12,16 @@ import (
 type PublicationServiceImpl struct {
 	repository Publications
 	reader     FeedReader
+	random     *rand.Rand
 }
 
 // NewPublicationServiceImpl returns a new instance of PublicationServiceImpl
 func NewPublicationServiceImpl(repository Publications, reader FeedReader) *PublicationServiceImpl {
+	source := rand.NewSource(time.Now().UnixNano())
 	return &PublicationServiceImpl{
 		repository: repository,
 		reader:     reader,
+		random:     rand.New(source),
 	}
 }
 
@@ -32,7 +35,10 @@ func (p *PublicationServiceImpl) Add(pub entities.Publication) string {
 	if pub.ID == "" {
 		pub.ID = p.generateID()
 	}
-
+	if pub.AddedAt.IsZero() {
+		pub.AddedAt = time.Now()
+	}
+	pub.UpdatedAt = time.Now()
 	return p.repository.Add(pub)
 }
 
@@ -67,5 +73,5 @@ func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication)
 }
 
 func (p *PublicationServiceImpl) generateID() string {
-	return fmt.Sprintf("%x-%x-%x", rand.Uint32(), rand.Uint32(), rand.Uint32())
+	return fmt.Sprintf("%x-%x-%x", p.random.Uint32(), p.random.Uint32(), p.random.Uint32())
 }
