@@ -5,12 +5,14 @@ import "github.com/janithl/paataka/entities"
 // PublicationServiceImpl is an implementation of the PublicationService
 type PublicationServiceImpl struct {
 	repository Publications
+	reader     FeedReader
 }
 
 // NewPublicationServiceImpl returns a new instance of PublicationServiceImpl
-func NewPublicationServiceImpl(repository Publications) *PublicationServiceImpl {
+func NewPublicationServiceImpl(repository Publications, reader FeedReader) *PublicationServiceImpl {
 	return &PublicationServiceImpl{
 		repository: repository,
+		reader:     reader,
 	}
 }
 

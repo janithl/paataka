@@ -9,9 +9,16 @@ import (
 	"github.com/janithl/paataka/usecases"
 )
 
+/** MockFeedReader */
+type MockFeedReader struct{}
+
+func (m MockFeedReader) Read(url string) map[string]entities.Post {
+	return nil
+}
+
 func setupService(version string) *usecases.PublicationServiceImpl {
 	repo := database.NewInMemoryPublicationRepository(version)
-	return usecases.NewPublicationServiceImpl(repo)
+	return usecases.NewPublicationServiceImpl(repo, MockFeedReader{})
 }
 
 const version string = "Mock InMemoryRepository v1.0"
