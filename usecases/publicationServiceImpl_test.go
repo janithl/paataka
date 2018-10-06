@@ -139,11 +139,11 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 
 /*
 	given publication is in repository:
-		{ID: "pub-001", Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+		{Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
 	and publication's feed has 3 posts on it:
-		{ID: "100-001", Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
-		{ID: "100-002", Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
-		{ID: "100-003", Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
+		{Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
+		{Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
+		{Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
 	when FetchPublicationPosts is called on it
 	then the Posts should be added to the repository
 */
