@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/janithl/paataka/entities"
@@ -27,7 +28,8 @@ func (c *CLI) GetInput() {
 
 	options := []option{
 		option{"Add Publication", c.addPublication},
-		option{"List All Publications", c.listAll},
+		option{"List All Publications", c.listAllPublications},
+		option{"List Latest Posts", c.listLatestPosts},
 		option{"Fetch All Posts", c.fetchAll},
 	}
 
@@ -65,7 +67,7 @@ func (c *CLI) addPublication() {
 	c.PublicationService.Add(entities.Publication{Title: title[:len(title)-1], URL: url[:len(url)-1]})
 }
 
-func (c *CLI) listAll() {
+func (c *CLI) listAllPublications() {
 	pubs := c.PublicationService.ListAll()
 	if len(pubs) == 0 {
 		fmt.Println("No Publications Yet")
@@ -74,7 +76,36 @@ func (c *CLI) listAll() {
 	}
 
 	for _, pub := range pubs {
-		fmt.Printf("%-20s %-60s %4d posts\n", pub.Title, pub.URL, len(pub.Posts))
+		fmt.Printf("%-20s %-48s %4d posts\n", pub.Title, fmt.Sprintf("%.46s", pub.URL), len(pub.Posts))
+	}
+}
+
+func (c *CLI) listLatestPosts() {
+	pubs := c.PublicationService.ListAll()
+	posts := []entities.Post{}
+
+	for _, pub := range pubs {
+		for _, post := range pub.Posts {
+			posts = append(posts, post)
+		}
+	}
+
+	if len(posts) == 0 {
+		fmt.Println("No Posts Yet")
+	} else {
+		fmt.Println("\nLatest Posts:")
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].AddedAt.After(posts[j].AddedAt)
+	})
+
+	if len(posts) > 20 {
+		posts = posts[:20]
+	}
+
+	for _, post := range posts {
+		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.AddedAt.Format("2006-01-02 03:04PM"))
 	}
 }
 
