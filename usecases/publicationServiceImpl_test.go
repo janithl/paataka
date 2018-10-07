@@ -97,8 +97,7 @@ func TestPublicationFindAndUpdate(t *testing.T) {
 	}
 
 	// Verify
-	got := pub.Title
-	want := publication.Title
+	got, want := pub.Title, publication.Title
 	if got != want {
 		t.Errorf("got '%s' want '%s'", got, want)
 	}
@@ -182,8 +181,10 @@ func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 				}
 			}
 
-			if matches != 3 {
-				t.Errorf("got '%d' matches, want 3", matches)
+			// check if all the posts are matching
+			got, want := matches, len(mockFeedReader.Posts)
+			if got != want {
+				t.Errorf("got '%d' mathces, want '%d'", got, want)
 			}
 		})
 	}
