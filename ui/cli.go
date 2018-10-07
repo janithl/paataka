@@ -61,7 +61,7 @@ func (c *CLI) addPublication() {
 	fmt.Print("Enter Title: ")
 	title, _ := c.reader.ReadString('\n')
 
-	fmt.Print("Enter URL: ")
+	fmt.Print("Enter Feed URL: ")
 	url, _ := c.reader.ReadString('\n')
 
 	c.PublicationService.Add(entities.Publication{Title: title[:len(title)-1], URL: url[:len(url)-1]})
