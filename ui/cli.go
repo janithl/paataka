@@ -74,7 +74,7 @@ func (c *CLI) listAll() {
 	}
 
 	for _, pub := range pubs {
-		fmt.Printf("%s (%s)\n", pub.Title, pub.URL)
+		fmt.Printf("%-20s %-60s %4d posts\n", pub.Title, pub.URL, len(pub.Posts))
 	}
 }
 

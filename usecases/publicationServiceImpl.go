@@ -60,13 +60,7 @@ func (p *PublicationServiceImpl) Find(id string) (entities.Publication, error) {
 func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication) error {
 	posts := p.reader.Read(pub.URL)
 	for _, post := range posts {
-		if post.ID == "" {
-			post.ID = p.generateID()
-		}
-		post.AddedAt = time.Now()
-		post.UpdatedAt = time.Now()
-
-		pub.AddPost(post)
+		pub = p.addUniquePost(pub, post)
 	}
 
 	pub.FetchedAt = time.Now()
@@ -76,4 +70,22 @@ func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication)
 
 func (p *PublicationServiceImpl) generateID() string {
 	return fmt.Sprintf("%x-%x-%x", p.random.Uint32(), p.random.Uint32(), p.random.Uint32())
+}
+
+func (p *PublicationServiceImpl) addUniquePost(pub entities.Publication, post entities.Post) entities.Publication {
+	for _, item := range pub.Posts {
+		if item.URL == post.URL {
+			return pub
+		}
+	}
+
+	if post.ID == "" {
+		post.ID = p.generateID()
+	}
+	post.AddedAt = time.Now()
+	post.UpdatedAt = time.Now()
+
+	pub.AddPost(post)
+
+	return pub
 }

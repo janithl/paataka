@@ -172,8 +172,8 @@ func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 	} else {
 		t.Run("Make sure all the posts have been added in...", func(t *testing.T) {
 			matches := 0
-			for _, wants := range mockFeedReader.Posts {
-				for _, gots := range pub.Posts {
+			for _, gots := range pub.Posts {
+				for _, wants := range mockFeedReader.Posts {
 					if gots.Title == wants.Title && gots.URL == wants.URL {
 						t.Logf("Got '%s', want '%s'", gots, wants)
 						matches++
