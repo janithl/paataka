@@ -92,27 +92,34 @@ func (c *CLI) listLatestPosts() {
 
 	if len(posts) == 0 {
 		fmt.Println("No Posts Yet")
-	} else {
-		fmt.Println("\nLatest Posts:")
+		return
 	}
 
 	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].AddedAt.After(posts[j].AddedAt)
+		return posts[i].CreatedAt.After(posts[j].CreatedAt)
 	})
 
-	if len(posts) > 20 {
-		posts = posts[:20]
+	fmt.Print("\nEnter number of posts to return: ")
+	userInput, _ := c.reader.ReadString('\n')
+	userInput = userInput[:len(userInput)-1]
+
+	if input, err := strconv.Atoi(userInput); err != nil || input <= 1 || len(posts) <= input {
+		fmt.Println("Invalid Input")
+		posts = posts[:10]
+	} else {
+		posts = posts[:input]
 	}
 
+	fmt.Println("\nLatest", len(posts), "Posts:")
 	for _, post := range posts {
-		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.AddedAt.Format("2006-01-02 03:04PM"))
+		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.CreatedAt.Format("2006-01-02 03:04PM"))
 	}
 }
 
 func (c *CLI) fetchAll() {
 	pubs := c.PublicationService.ListAll()
-	jobs := make(chan entities.Publication, 4)
-	results := make(chan string, 4)
+	jobs := make(chan entities.Publication, 6)
+	results := make(chan string, 6)
 
 	for w := 1; w <= 3; w++ {
 		go c.feedFetchWorker(w, jobs, results)

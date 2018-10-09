@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/janithl/paataka/entities"
 )
@@ -13,6 +14,7 @@ type feedItem struct {
 	Title   string `xml:"title"`
 	Link    string `xml:"link"`
 	Content string `xml:"description"`
+	PubDate string `xml:"pubDate"`
 }
 
 type feed struct {
@@ -48,7 +50,18 @@ func (x XMLFeedReader) Read(url string) []entities.Post {
 	}
 
 	for _, post := range feed.Items {
-		posts = append(posts, entities.Post{Title: post.Title, URL: post.Link})
+		postEntity := entities.Post{Title: post.Title, URL: post.Link}
+
+		if pubDate, err := time.Parse(time.RFC1123, post.PubDate); err == nil {
+			postEntity.CreatedAt = pubDate
+		} else if pubDate, err = time.Parse(time.RFC1123Z, post.PubDate); err == nil {
+			postEntity.CreatedAt = pubDate
+		} else {
+			fmt.Println(err)
+			postEntity.CreatedAt = time.Now()
+		}
+
+		posts = append(posts, postEntity)
 	}
 
 	return posts
