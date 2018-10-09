@@ -111,11 +111,31 @@ func (c *CLI) listLatestPosts() {
 
 func (c *CLI) fetchAll() {
 	pubs := c.PublicationService.ListAll()
+	jobs := make(chan entities.Publication, 4)
+	results := make(chan string, 4)
+
+	for w := 1; w <= 3; w++ {
+		go c.feedFetchWorker(w, jobs, results)
+	}
+
 	for _, pub := range pubs {
-		fmt.Printf("\nFetching %s (%s)\n", pub.Title, pub.URL)
+		jobs <- pub
+	}
+	close(jobs)
+
+	for a := 1; a <= len(pubs); a++ {
+		result := <-results
+		fmt.Println(result)
+	}
+}
+
+func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results chan<- string) {
+	for pub := range jobs {
 		err := c.PublicationService.FetchPublicationPosts(pub)
 		if err != nil {
-			fmt.Println("Error: ", err)
+			results <- fmt.Sprintf("[Worker %d] Error fetching feed %q", id, pub.Title)
+		} else {
+			results <- fmt.Sprintf("[Worker %d] Fetched feed %q", id, pub.Title)
 		}
 	}
 }
