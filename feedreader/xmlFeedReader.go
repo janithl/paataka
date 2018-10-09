@@ -13,6 +13,7 @@ import (
 type feedItem struct {
 	Title   string `xml:"title"`
 	Link    string `xml:"link"`
+	GUID    string `xml:"guid"`
 	Content string `xml:"description"`
 	PubDate string `xml:"pubDate"`
 }
@@ -51,6 +52,10 @@ func (x XMLFeedReader) Read(url string) []entities.Post {
 
 	for _, post := range feed.Items {
 		postEntity := entities.Post{Title: post.Title, URL: post.Link}
+
+		if len(post.Link) == 0 {
+			postEntity.URL = post.GUID
+		}
 
 		if pubDate, err := time.Parse(time.RFC1123, post.PubDate); err == nil {
 			postEntity.CreatedAt = pubDate
