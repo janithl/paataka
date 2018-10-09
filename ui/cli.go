@@ -99,21 +99,35 @@ func (c *CLI) listLatestPosts() {
 		return posts[i].CreatedAt.After(posts[j].CreatedAt)
 	})
 
-	fmt.Print("\nEnter number of posts to return: ")
+	c.pagedList(posts, 0, 10)
+}
+
+func (c *CLI) pagedList(list []entities.Post, page int, size int) {
+	start := page * size
+	end := (page + 1) * size
+
+	if start > len(list) || page < 0 || size < 1 {
+		return
+	} else if end > len(list) {
+		end = len(list)
+	}
+
+	fmt.Printf("\nLatest Posts [%d - %d of %d]:\n", start, end, len(list))
+	for _, post := range list[start:end] {
+		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.CreatedAt.Format("2006-01-02 03:04PM"))
+	}
+
+	fmt.Print("\nEnter [p] for previous, [n] for next, or any other key to go back: ")
 	userInput, _ := c.reader.ReadString('\n')
 	userInput = userInput[:len(userInput)-1]
 
-	if input, err := strconv.Atoi(userInput); err != nil || input <= 1 || len(posts) <= input {
-		fmt.Println("Invalid Input")
-		posts = posts[:10]
-	} else {
-		posts = posts[:input]
+	if userInput == "n" {
+		c.pagedList(list, page+1, size)
+	} else if userInput == "p" {
+		c.pagedList(list, page-1, size)
 	}
 
-	fmt.Println("\nLatest", len(posts), "Posts:")
-	for _, post := range posts {
-		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.CreatedAt.Format("2006-01-02 03:04PM"))
-	}
+	return
 }
 
 func (c *CLI) fetchAll() {
