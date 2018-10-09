@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/janithl/paataka/entities"
 	"github.com/janithl/paataka/usecases"
@@ -30,6 +31,7 @@ func (c *CLI) GetInput() {
 		option{"Add Publication", c.addPublication},
 		option{"List All Publications", c.listAllPublications},
 		option{"List Latest Posts", c.listLatestPosts},
+		option{"Search Posts", c.searchPosts},
 		option{"Fetch All Posts", c.fetchAll},
 	}
 
@@ -99,10 +101,41 @@ func (c *CLI) listLatestPosts() {
 		return posts[i].CreatedAt.After(posts[j].CreatedAt)
 	})
 
-	c.pagedList(posts, 0, 10)
+	c.pagedList("Latest Posts", posts, 0, 10)
 }
 
-func (c *CLI) pagedList(list []entities.Post, page int, size int) {
+func (c *CLI) searchPosts() {
+	fmt.Print("\nEnter search query: ")
+	userInput, _ := c.reader.ReadString('\n')
+	userInput = userInput[:len(userInput)-1]
+
+	if userInput == "" {
+		return
+	}
+
+	pubs := c.PublicationService.ListAll()
+	posts := []entities.Post{}
+	for _, pub := range pubs {
+		for _, post := range pub.Posts {
+			if strings.Contains(strings.ToLower(post.Title), strings.ToLower(userInput)) {
+				posts = append(posts, post)
+			}
+		}
+	}
+
+	if len(posts) == 0 {
+		fmt.Println("No Posts Found")
+		return
+	}
+
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].AddedAt.After(posts[j].AddedAt)
+	})
+
+	c.pagedList("Search Results", posts, 0, 10)
+}
+
+func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) {
 	start := page * size
 	end := (page + 1) * size
 
@@ -112,7 +145,7 @@ func (c *CLI) pagedList(list []entities.Post, page int, size int) {
 		end = len(list)
 	}
 
-	fmt.Printf("\nLatest Posts [%d - %d of %d]:\n", start, end, len(list))
+	fmt.Printf("\n%s [%d - %d of %d]:\n", title, start, end, len(list))
 	for _, post := range list[start:end] {
 		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.CreatedAt.Format("2006-01-02 03:04PM"))
 	}
@@ -122,9 +155,9 @@ func (c *CLI) pagedList(list []entities.Post, page int, size int) {
 	userInput = userInput[:len(userInput)-1]
 
 	if userInput == "n" {
-		c.pagedList(list, page+1, size)
+		c.pagedList(title, list, page+1, size)
 	} else if userInput == "p" {
-		c.pagedList(list, page-1, size)
+		c.pagedList(title, list, page-1, size)
 	}
 
 	return
