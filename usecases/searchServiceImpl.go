@@ -29,7 +29,7 @@ func (s *SearchServiceImpl) Index(obj SearchObject) {
 }
 
 // Search returns the list of relevant results
-func (s *SearchServiceImpl) Search(objtype string, query string) ([]SearchObject, error) {
+func (s *SearchServiceImpl) Search(objtype string, query string) []SearchObject {
 	matches := s.wordRegexp.FindAllString(strings.ToLower(query), -1)
 
 	results := make([]SearchObject, 0)
@@ -41,9 +41,5 @@ func (s *SearchServiceImpl) Search(objtype string, query string) ([]SearchObject
 		}
 	}
 
-	if len(results) == 0 {
-		return results, ErrNoSearchResults
-	}
-
-	return results, nil
+	return results
 }

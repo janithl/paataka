@@ -23,7 +23,7 @@ func TestSearch(t *testing.T) {
 	}
 
 	t.Run("Search for all Posts containing 'Hello'", func(t *testing.T) {
-		got, _ := service.Search("Post", "Hello")
+		got := service.Search("Post", "Hello")
 		want := []usecases.SearchObject{objects[0], objects[2]}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %q mathces, want %q", got, want)
@@ -31,16 +31,18 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("Search for all Publications containing 'World'", func(t *testing.T) {
-		got, _ := service.Search("Publication", "World")
+		got := service.Search("Publication", "World")
 		want := []usecases.SearchObject{objects[4]}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %q mathces, want %q", got, want)
 		}
 	})
 
-	t.Run("Search for a nonexistent word -- should throw error", func(t *testing.T) {
-		if _, err := service.Search("Publication", "Not There"); err == nil {
-			t.Errorf("got %q want %q", err, usecases.ErrNoSearchResults)
+	t.Run("Search for a nonexistent word -- should return empty list", func(t *testing.T) {
+		got := service.Search("Publication", "Not There")
+		want := []usecases.SearchObject{}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %q mathces, want %q", got, want)
 		}
 	})
 
