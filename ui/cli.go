@@ -6,7 +6,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/janithl/paataka/entities"
 	"github.com/janithl/paataka/usecases"
@@ -113,26 +112,13 @@ func (c *CLI) searchPosts() {
 		return
 	}
 
-	pubs := c.PublicationService.ListAll()
-	posts := []entities.Post{}
-	for _, pub := range pubs {
-		for _, post := range pub.Posts {
-			if strings.Contains(strings.ToLower(post.Title), strings.ToLower(userInput)) {
-				posts = append(posts, post)
-			}
+	if results := c.PublicationService.Search("Post", userInput); len(results) > 0 {
+		for _, res := range results {
+			fmt.Printf("%s\n", res)
 		}
-	}
-
-	if len(posts) == 0 {
+	} else {
 		fmt.Println("No Posts Found")
-		return
 	}
-
-	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].AddedAt.After(posts[j].AddedAt)
-	})
-
-	c.pagedList("Search Results", posts, 0, 10)
 }
 
 func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) {

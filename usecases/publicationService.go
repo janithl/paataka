@@ -9,4 +9,5 @@ type PublicationService interface {
 	ListAll() map[string]entities.Publication
 	Find(string) (entities.Publication, error)
 	FetchPublicationPosts(entities.Publication) error
+	Search(string, string) []SearchObject
 }
