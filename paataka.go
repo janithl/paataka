@@ -13,7 +13,8 @@ func main() {
 	defer repo.Persist()
 
 	reader := feedreader.XMLFeedReader{}
-	service := usecases.NewPublicationServiceImpl(repo, reader)
+	search := usecases.NewSearchServiceImpl()
+	service := usecases.NewPublicationServiceImpl(search, repo, reader)
 
 	cli := ui.CLI{PublicationService: service}
 	cli.GetInput()

@@ -19,7 +19,8 @@ func (m MockFeedReader) Read(url string) []entities.Post {
 
 func setupService(version string, reader usecases.FeedReader) *usecases.PublicationServiceImpl {
 	repo := database.NewInMemoryPublicationRepository(version)
-	return usecases.NewPublicationServiceImpl(repo, reader)
+	search := usecases.NewSearchServiceImpl()
+	return usecases.NewPublicationServiceImpl(search, repo, reader)
 }
 
 const version string = "Mock InMemoryRepository v1.0"
