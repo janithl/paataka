@@ -12,16 +12,19 @@ import (
 type PublicationServiceImpl struct {
 	repository Publications
 	reader     FeedReader
-	random     *rand.Rand
+
+	random *rand.Rand
+	search SearchService
 }
 
 // NewPublicationServiceImpl returns a new instance of PublicationServiceImpl
-func NewPublicationServiceImpl(repository Publications, reader FeedReader) *PublicationServiceImpl {
+func NewPublicationServiceImpl(search SearchService, repository Publications, reader FeedReader) *PublicationServiceImpl {
 	source := rand.NewSource(time.Now().UnixNano())
 	return &PublicationServiceImpl{
 		repository: repository,
 		reader:     reader,
 		random:     rand.New(source),
+		search:     search,
 	}
 }
 
