@@ -77,7 +77,7 @@ func (c *CLI) listAllPublications() {
 	}
 
 	for _, pub := range pubs {
-		fmt.Printf("%-20s %-48s %4d posts\n", pub.Title, fmt.Sprintf("%.46s", pub.URL), len(pub.Posts))
+		fmt.Println(&pub)
 	}
 }
 
@@ -114,7 +114,7 @@ func (c *CLI) searchPosts() {
 
 	if results := c.PublicationService.Search("Post", userInput); len(results) > 0 {
 		for _, res := range results {
-			fmt.Printf("%s\n", res)
+			fmt.Println(&res)
 		}
 	} else {
 		fmt.Println("No Posts Found")
@@ -133,7 +133,7 @@ func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) 
 
 	fmt.Printf("\n%s [%d - %d of %d]:\n", title, start, end, len(list))
 	for _, post := range list[start:end] {
-		fmt.Printf("%-60s %19s\n", fmt.Sprintf("%.58s", post.Title), post.CreatedAt.Format("2006-01-02 03:04PM"))
+		fmt.Println(&post)
 	}
 
 	fmt.Print("\nEnter [p] for previous, [n] for next, or any other key to go back: ")

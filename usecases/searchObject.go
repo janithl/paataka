@@ -9,6 +9,7 @@ type SearchObject struct {
 	Content string
 }
 
-func (s SearchObject) String() string {
+// String method returns the SearchObject as a string
+func (s *SearchObject) String() string {
 	return fmt.Sprintf("[%s] %s", s.Type, s.Content)
 }
