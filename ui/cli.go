@@ -58,6 +58,7 @@ func (c *CLI) GetInput() {
 	}
 }
 
+// addPublication allows user to add a new publication
 func (c *CLI) addPublication() {
 	fmt.Print("Enter Title: ")
 	title, _ := c.reader.ReadString('\n')
@@ -68,6 +69,7 @@ func (c *CLI) addPublication() {
 	c.PublicationService.Add(entities.Publication{Title: title[:len(title)-1], URL: url[:len(url)-1]})
 }
 
+// listAllPublications lists all publications
 func (c *CLI) listAllPublications() {
 	pubs := c.PublicationService.ListAll()
 	if len(pubs) == 0 {
@@ -81,6 +83,7 @@ func (c *CLI) listAllPublications() {
 	}
 }
 
+// listLatestPosts lists the posts ordered by time (latest first)
 func (c *CLI) listLatestPosts() {
 	pubs := c.PublicationService.ListAll()
 	posts := []entities.Post{}
@@ -103,6 +106,7 @@ func (c *CLI) listLatestPosts() {
 	c.pagedList("Latest Posts", posts, 0, 10)
 }
 
+// searchPosts allows users to search for posts
 func (c *CLI) searchPosts() {
 	fmt.Print("\nEnter search query: ")
 	userInput, _ := c.reader.ReadString('\n')
@@ -121,6 +125,7 @@ func (c *CLI) searchPosts() {
 	}
 }
 
+// pagedList is a method to break up posts into multuple pages
 func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) {
 	start := page * size
 	end := (page + 1) * size
@@ -132,15 +137,18 @@ func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) 
 	}
 
 	fmt.Printf("\n%s [%d - %d of %d]:\n", title, start, end, len(list))
-	for _, post := range list[start:end] {
-		fmt.Println(&post)
+	for index, post := range list[start:end] {
+		fmt.Printf("[%d] %s\n", index, &post)
 	}
 
-	fmt.Print("\nEnter [p] for previous, [n] for next, or any other key to go back: ")
+	fmt.Print("\nEnter [0-9] for details, [p] for previous, [n] for next, or any other key to go back: ")
 	userInput, _ := c.reader.ReadString('\n')
 	userInput = userInput[:len(userInput)-1]
 
-	if userInput == "n" {
+	if input, err := strconv.Atoi(userInput); err == nil && input >= 0 && input+start < len(list) {
+		c.viewPost(list[start+input])
+		c.pagedList(title, list, page, size)
+	} else if userInput == "n" {
 		c.pagedList(title, list, page+1, size)
 	} else if userInput == "p" {
 		c.pagedList(title, list, page-1, size)
@@ -149,6 +157,25 @@ func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) 
 	return
 }
 
+// viewPost allows users to view more details about a post
+func (c *CLI) viewPost(post entities.Post) {
+	fmt.Println("")
+	fmt.Println(post.Title)
+	fmt.Println(post.URL)
+	fmt.Printf("Posted at %s", post.CreatedAt.Format("2006-01-02 03:04PM"))
+	fmt.Println("")
+
+	if results := c.PublicationService.Search("Post", post.Title); len(results) > 1 {
+		fmt.Println("")
+		fmt.Println("Similar Posts:")
+		for _, res := range results[1:] {
+			fmt.Println(&res)
+		}
+		fmt.Println("")
+	}
+}
+
+// fetchAll fetches all the feeds from publications
 func (c *CLI) fetchAll() {
 	pubs := c.PublicationService.ListAll()
 	jobs := make(chan entities.Publication, 6)
@@ -169,6 +196,7 @@ func (c *CLI) fetchAll() {
 	}
 }
 
+// feedFetchWorker is the concurrency mechanism to allow multiple feed fetcher workers
 func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results chan<- string) {
 	for pub := range jobs {
 		err := c.PublicationService.FetchPublicationPosts(pub)

@@ -51,6 +51,7 @@ func (s *SearchServiceImpl) Search(objtype string, query string) []SearchObject 
 			}
 
 			// add to result if score is above cutoff
+			score /= float64(len(queryTerms))
 			if score > ScoreCutoff {
 				doc.Score = score
 				results = append(results, doc)
