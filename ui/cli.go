@@ -30,7 +30,7 @@ func (c *CLI) GetInput() {
 		option{"Add Publication", c.addPublication},
 		option{"List All Publications", c.listAllPublications},
 		option{"List Latest Posts", c.listLatestPosts},
-		option{"Search Posts", c.searchPosts},
+		option{"Search Posts And Publications", c.searchPosts},
 		option{"Fetch All Posts", c.fetchAll},
 	}
 
@@ -120,7 +120,9 @@ func (c *CLI) searchPosts() {
 		fmt.Println("")
 		fmt.Println("Publications:")
 		for _, res := range results {
-			fmt.Println(res.Content)
+			if pub, err := c.PublicationService.Find(res.ID); err == nil {
+				fmt.Println(&pub)
+			}
 		}
 	}
 
