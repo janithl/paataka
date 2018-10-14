@@ -25,6 +25,7 @@ type option struct {
 // GetInput gets user input via CLI
 func (c *CLI) GetInput() {
 	c.reader = bufio.NewReader(os.Stdin)
+	c.printBanner()
 
 	options := []option{
 		option{"Add Publication", c.addPublication},
@@ -220,4 +221,16 @@ func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results 
 			results <- fmt.Sprintf("[Worker %d] Fetched feed %q", id, pub.Title)
 		}
 	}
+}
+
+// printBanner simply prints a silly ASCII banner
+func (c *CLI) printBanner() {
+	fmt.Println("")
+	fmt.Println("                      __       __       ")
+	fmt.Println("      ___  ___ ____ _/ /____ _/ /_____ _")
+	fmt.Println("     / _ \\/ _ `/ _ `/ __/ _ `/  '_/ _ `/")
+	fmt.Println("    / .__/\\_,_/\\_,_/\\__/\\_,_/_/\\_/\\_,_/")
+	fmt.Println("   /_/", c.PublicationService.GetRepositoryVersion())
+	fmt.Println("       https://github.com/janithl/paataka")
+	fmt.Println("")
 }

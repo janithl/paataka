@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	paatakaVersion := "Paataka v1.0"
+	paatakaVersion := "Paataka v1.2"
 	repo := database.NewSQLPublicationRepository(paatakaVersion)
 	defer repo.Persist()
 
