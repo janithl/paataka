@@ -10,4 +10,5 @@ type PublicationService interface {
 	Find(string) (entities.Publication, error)
 	FetchPublicationPosts(entities.Publication) error
 	Search(string, string) []SearchObject
+	GetPosts([]string) []entities.Post
 }

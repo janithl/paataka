@@ -116,11 +116,23 @@ func (c *CLI) searchPosts() {
 		return
 	}
 
-	if results := c.PublicationService.Search("Post", userInput); len(results) > 0 {
+	if results := c.PublicationService.Search("Publication", userInput); len(results) > 0 {
+		fmt.Println("")
+		fmt.Println("Publications:")
 		for _, res := range results {
-			fmt.Println(&res)
+			fmt.Println(res.Content)
 		}
+	}
+
+	if results := c.PublicationService.Search("Post", userInput); len(results) > 0 {
+		ids := make([]string, 0)
+		for _, res := range results {
+			ids = append(ids, res.ID)
+		}
+		posts := c.PublicationService.GetPosts(ids)
+		c.pagedList("Posts", posts, 0, 10)
 	} else {
+		fmt.Println("")
 		fmt.Println("No Posts Found")
 	}
 }

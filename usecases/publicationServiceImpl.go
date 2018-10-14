@@ -80,6 +80,22 @@ func (p *PublicationServiceImpl) Search(objtype string, query string) []SearchOb
 	return p.search.Search(objtype, query)
 }
 
+// GetPosts returns the Posts with the given IDs
+func (p *PublicationServiceImpl) GetPosts(ids []string) []entities.Post {
+	results := make([]entities.Post, 0)
+	for _, id := range ids {
+		for _, pub := range p.ListAll() {
+			for _, post := range pub.Posts {
+				if post.ID == id {
+					results = append(results, post)
+				}
+			}
+		}
+	}
+
+	return results
+}
+
 // generateID generates a random string ID, formatted sort of like a UUID
 func (p *PublicationServiceImpl) generateID() string {
 	return fmt.Sprintf("%x-%x-%x", p.random.Uint32(), p.random.Uint32(), p.random.Uint32())
