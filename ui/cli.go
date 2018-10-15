@@ -36,7 +36,7 @@ func (c *CLI) GetInput() {
 	}
 
 	for {
-		fmt.Println("")
+		fmt.Println()
 		for index, opt := range options {
 			fmt.Printf("[%1d] %s\n", index+1, opt.name)
 		}
@@ -118,7 +118,7 @@ func (c *CLI) searchPosts() {
 	}
 
 	if results := c.PublicationService.Search("Publication", userInput); len(results) > 0 {
-		fmt.Println("")
+		fmt.Println()
 		fmt.Println("Publications:")
 		for _, res := range results {
 			if pub, err := c.PublicationService.Find(res.ID); err == nil {
@@ -135,7 +135,7 @@ func (c *CLI) searchPosts() {
 		posts := c.PublicationService.GetPosts(ids)
 		c.pagedList("Posts", posts, 0, 10)
 	} else {
-		fmt.Println("")
+		fmt.Println()
 		fmt.Println("No Posts Found")
 	}
 }
@@ -174,19 +174,25 @@ func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) 
 
 // viewPost allows users to view more details about a post
 func (c *CLI) viewPost(post entities.Post) {
-	fmt.Println("")
+	fmt.Println()
 	fmt.Println(post.Title)
 	fmt.Println(post.URL)
 	fmt.Printf("Posted at %s", post.CreatedAt.Format("2006-01-02 03:04PM"))
-	fmt.Println("")
+	fmt.Println()
 
 	if results := c.PublicationService.Search("Post", post.Title); len(results) > 1 {
-		fmt.Println("")
-		fmt.Println("Similar Posts:")
-		for _, res := range results[1:] {
-			fmt.Println(&res)
+		ids := make([]string, 0)
+		for _, res := range results {
+			ids = append(ids, res.ID)
 		}
-		fmt.Println("")
+		posts := c.PublicationService.GetPosts(ids)
+
+		fmt.Println()
+		fmt.Println("Similar Posts:")
+		for index, post := range posts[1:] {
+			fmt.Printf("[%d] %s\n", index, &post)
+		}
+		fmt.Println()
 	}
 }
 
@@ -225,12 +231,12 @@ func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results 
 
 // printBanner simply prints a silly ASCII banner
 func (c *CLI) printBanner() {
-	fmt.Println("")
+	fmt.Println()
 	fmt.Println("                      __       __       ")
 	fmt.Println("      ___  ___ ____ _/ /____ _/ /_____ _")
 	fmt.Println("     / _ \\/ _ `/ _ `/ __/ _ `/  '_/ _ `/")
 	fmt.Println("    / .__/\\_,_/\\_,_/\\__/\\_,_/_/\\_/\\_,_/")
 	fmt.Println("   /_/", c.PublicationService.GetRepositoryVersion())
 	fmt.Println("       https://github.com/janithl/paataka")
-	fmt.Println("")
+	fmt.Println()
 }
