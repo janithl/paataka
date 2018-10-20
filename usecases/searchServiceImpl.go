@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"sort"
@@ -9,50 +10,51 @@ import (
 
 // SearchServiceImpl is an implementation of the SearchService
 type SearchServiceImpl struct {
-	wordRegexp *regexp.Regexp
-	termCounts map[string]float64
-	corpus     map[string]SearchObject
+	wordRegexp    *regexp.Regexp
+	trigramCounts map[string]float64
+	trigramList   map[string]SearchObject
 }
 
 // NewSearchServiceImpl returns a new instance of SearchServiceImpl
 func NewSearchServiceImpl() *SearchServiceImpl {
 	return &SearchServiceImpl{
-		wordRegexp: regexp.MustCompile(`\w+`),
-		termCounts: make(map[string]float64),
-		corpus:     make(map[string]SearchObject),
+		wordRegexp:    regexp.MustCompile(`\w+`),
+		trigramCounts: make(map[string]float64),
+		trigramList:   make(map[string]SearchObject),
 	}
 }
 
 // Index adds the given object to the search index
 func (s *SearchServiceImpl) Index(obj SearchObject) {
-	// get term counts and add them to term counts list
-	terms := s.getTermCounts(obj.Content)
-	for term := range terms {
-		s.termCounts[term] += 1.0
+	// get trigram counts and add them to trigram counts list
+	trigrams := s.getTrigramCounts(obj.Content)
+	for trigram := range trigrams {
+		s.trigramCounts[trigram] += 1.0
 	}
 
-	// add search object to document corpus
-	obj.Terms = terms
-	s.corpus[obj.ID] = obj
+	// add search object to trigram list
+	obj.Trigrams = trigrams
+	s.trigramList[obj.ID] = obj
 }
 
 // Search returns the list of relevant results
 func (s *SearchServiceImpl) Search(objtype string, query string) []SearchObject {
-	queryTerms := s.wordRegexp.FindAllString(strings.ToLower(query), -1)
+	queryTrigrams := s.getTrigramList(query)
 
 	results := make([]SearchObject, 0)
-	for _, doc := range s.corpus {
+	for _, doc := range s.trigramList {
 		score := 0.0
 		if doc.Type == objtype {
-			for _, queryTerm := range queryTerms {
-				if docTermFreq, ok := doc.Terms[queryTerm]; ok {
-					score += docTermFreq * s.getIDF(queryTerm)
+			for _, queryTrigram := range queryTrigrams {
+				if docTrigramFreq, ok := doc.Trigrams[queryTrigram]; ok {
+					score += docTrigramFreq * s.getIDF(queryTrigram)
 				}
 			}
 
 			// add to result if score is above cutoff
-			score /= float64(len(queryTerms))
+			score /= float64(len(queryTrigrams))
 			if score > ScoreCutoff {
+				fmt.Println(score, doc.Content)
 				doc.Score = score
 				results = append(results, doc)
 			}
@@ -67,34 +69,48 @@ func (s *SearchServiceImpl) Search(objtype string, query string) []SearchObject 
 	return results
 }
 
-// getTermCounts extracts the query terms into a list and gives them normalized weights
-func (s *SearchServiceImpl) getTermCounts(query string) map[string]float64 {
-	terms := s.wordRegexp.FindAllString(strings.ToLower(query), -1)
-
-	// build list of terms and their counts
-	termCounts := make(map[string]float64)
-	for _, term := range terms {
-		termCounts[term] += 1.0
+// getTrigramList extracts a list of trigrams from a string
+func (s *SearchServiceImpl) getTrigramList(query string) []string {
+	matches := s.wordRegexp.FindAllString(strings.ToLower(query), -1)
+	trigrams := make([]string, 0)
+	for _, match := range matches {
+		word := "  " + match + " "
+		for i := 0; i < len(word)-2; i++ {
+			trigrams = append(trigrams, word[i:i+2])
+		}
 	}
-
-	// normalise term count list
-	length := float64(len(terms))
-	for key, val := range termCounts {
-		termCounts[key] = val / length
-	}
-
-	return termCounts
+	sort.Strings(trigrams)
+	return trigrams
 }
 
-// getIDF gets the inverse of the number of documents with the term in it
-func (s *SearchServiceImpl) getIDF(term string) float64 {
+// getTrigramCounts extracts the trigrams from the query terms into a list
+// and gives them normalized weights
+func (s *SearchServiceImpl) getTrigramCounts(query string) map[string]float64 {
+	// build list of trigrams and their counts
+	trigrams := s.getTrigramList(query)
+	trigramCounts := make(map[string]float64)
+	for _, trigram := range trigrams {
+		trigramCounts[trigram] += 1.0
+	}
+
+	// normalise trigram count list
+	length := float64(len(trigrams))
+	for key, val := range trigramCounts {
+		trigramCounts[key] = val / length
+	}
+
+	return trigramCounts
+}
+
+// getIDF gets the inverse of the number of documents with the trigram in it
+func (s *SearchServiceImpl) getIDF(trigram string) float64 {
 	docCount := 0.0
-	for _, doc := range s.corpus {
-		for docTerm := range doc.Terms {
-			if term == docTerm {
+	for _, doc := range s.trigramList {
+		for docTrigram := range doc.Trigrams {
+			if trigram == docTrigram {
 				docCount += 1.0
 			}
 		}
 	}
-	return math.Log(float64(len(s.corpus)) / (docCount + 1.0))
+	return math.Log(float64(len(s.trigramList)) / (docCount + 1.0))
 }

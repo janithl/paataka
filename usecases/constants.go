@@ -6,4 +6,4 @@ import "errors"
 var ErrPublicationNotFound = errors.New("Publication not found")
 
 // ScoreCutoff is the minimum score needed to be added to a search result
-const ScoreCutoff = 0.2
+const ScoreCutoff = 0.04
