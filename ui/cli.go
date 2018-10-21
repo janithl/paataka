@@ -6,6 +6,8 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/janithl/paataka/entities"
 	"github.com/janithl/paataka/usecases"
@@ -80,7 +82,8 @@ func (c *CLI) listAllPublications() {
 	}
 
 	for _, pub := range pubs {
-		fmt.Println(&pub)
+		fmt.Printf("%-20s %-48s %4d posts\n", c.truncate(pub.Title, 20),
+			c.truncate(pub.URL, 48), len(pub.Posts))
 	}
 }
 
@@ -122,7 +125,8 @@ func (c *CLI) searchPosts() {
 		fmt.Println("Publications:")
 		for _, res := range results {
 			if pub, err := c.PublicationService.Find(res.ID); err == nil {
-				fmt.Println(&pub)
+				fmt.Printf("%-20s %-48s %4d posts\n", c.truncate(pub.Title, 20),
+					c.truncate(pub.URL, 48), len(pub.Posts))
 			}
 		}
 	}
@@ -153,7 +157,8 @@ func (c *CLI) pagedList(title string, list []entities.Post, page int, size int) 
 
 	fmt.Printf("\n%s [%d - %d of %d]:\n", title, start, end, len(list))
 	for index, post := range list[start:end] {
-		fmt.Printf("[%d] %s\n", index, &post)
+		fmt.Printf("[%d] %-56s %19s\n", index, c.truncate(post.Title, 56),
+			post.CreatedAt.Format("2006-01-02 03:04PM"))
 	}
 
 	fmt.Print("\nEnter [0-9] for details, [p] for previous, [n] for next, or any other key to go back: ")
@@ -227,6 +232,27 @@ func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results 
 			results <- fmt.Sprintf("[Worker %d] Fetched feed %q", id, pub.Title)
 		}
 	}
+}
+
+// truncate truncates a given string to a given length
+func (c *CLI) truncate(text string, length int) string {
+	if utf8.RuneCountInString(text) <= length || length < 4 {
+		return text
+	}
+
+	words := strings.Split(text, " ")
+	if len(words) < 1 {
+		return text
+	}
+
+	output := words[0]
+	for i := 1; i < len(words) && utf8.RuneCountInString(output+" "+words[i]) < length-3; i++ {
+		output += " " + words[i]
+	}
+	if utf8.RuneCountInString(output) >= length-3 {
+		output = output[:length-3]
+	}
+	return output + "..."
 }
 
 // printBanner simply prints a silly ASCII banner

@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -23,9 +22,4 @@ func (p *Publication) AddPost(post Post) {
 	}
 
 	p.Posts[post.ID] = post
-}
-
-// String method returns the Publication details as a string
-func (p *Publication) String() string {
-	return fmt.Sprintf("%-20s %-48s %4d posts", p.Title, Truncate(p.URL, 48), len(p.Posts))
 }
