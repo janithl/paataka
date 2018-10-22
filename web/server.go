@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/janithl/paataka/usecases"
 )
@@ -25,10 +26,12 @@ func (s *Server) outputJSON(w http.ResponseWriter, output interface{}) {
 	w.Write(outputJSON)
 }
 
-func (s *Server) defaultHandler() http.HandlerFunc {
-	version := s.PublicationService.GetRepositoryVersion()
+func (s *Server) version() http.HandlerFunc {
+	version := make(map[string]string)
+	version["Version"] = s.PublicationService.GetRepositoryVersion()
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		s.outputJSON(w, "Welcome to "+version)
+		s.outputJSON(w, version)
 	}
 }
 
@@ -38,10 +41,10 @@ func (s *Server) listPublications() http.HandlerFunc {
 		pubList := PublicationList{Page: 1}
 		for _, pub := range pubs {
 			pubList.Publications = append(pubList.Publications, Publication{
-				ID:    pub.ID,
-				Title: pub.Title,
-				URL:   pub.URL,
-				Posts: len(pub.Posts),
+				ID:        pub.ID,
+				Title:     pub.Title,
+				URL:       pub.URL,
+				PostCount: len(pub.Posts),
 			})
 		}
 
@@ -58,8 +61,13 @@ func (s *Server) listPublicationDetails() http.HandlerFunc {
 			return
 		}
 
-		s.outputJSON(w, Publication{ID: pub.ID, Title: pub.Title, URL: pub.URL, Posts: len(pub.Posts)})
+		s.outputJSON(w, Publication{ID: pub.ID, Title: pub.Title, URL: pub.URL, PostCount: len(pub.Posts)})
 	}
+}
+
+func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
+	fp := path.Join("static", "index.html")
+	http.ServeFile(w, r, fp)
 }
 
 // Serve serves HTTP
@@ -67,7 +75,8 @@ func (s *Server) Serve() {
 	// define the routes
 	http.HandleFunc("/publications", s.listPublications())
 	http.HandleFunc("/publication/", s.listPublicationDetails())
-	http.HandleFunc("/", s.defaultHandler())
+	http.HandleFunc("/version", s.version())
+	http.HandleFunc("/", s.defaultHandler)
 
 	// serve on 9000
 	fmt.Println("Serving HTTP on localhost:9000")

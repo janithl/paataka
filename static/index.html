@@ -1,0 +1,24 @@
+<html>
+
+<head>
+    <title>Paataka</title>
+</head>
+
+<body onload="loadData()">
+    <div id="app"></div>
+    <script>
+        function loadData() {
+            fetch('./publications').then(data => data.json())
+                .then(json => {
+                    let pubs = [];
+                    for (pub of json.publications) {
+                        pubs.push(`<a href="publication/${pub.id}"><li>${pub.title} (${pub.post_count} posts)</li></a>`);
+                    }
+                    document.getElementById('app').innerHTML = '<ul>' + pubs.join('\n') + '</ul>';
+                })
+                .catch(error => console.error(error));
+        }
+    </script>
+</body>
+
+</html>
