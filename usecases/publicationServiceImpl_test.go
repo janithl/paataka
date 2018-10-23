@@ -13,8 +13,8 @@ type MockFeedReader struct {
 	Posts []entities.Post
 }
 
-func (m MockFeedReader) Read(url string) []entities.Post {
-	return m.Posts
+func (m MockFeedReader) Read(url string) ([]entities.Post, error) {
+	return m.Posts, nil
 }
 
 func setupService(version string, reader usecases.FeedReader) *usecases.PublicationServiceImpl {

@@ -65,13 +65,18 @@ func (p *PublicationServiceImpl) Find(id string) (entities.Publication, error) {
 
 // FetchPublicationPosts fetches Publication posts from the feed and adds it to the publication
 func (p *PublicationServiceImpl) FetchPublicationPosts(pub entities.Publication) error {
-	posts := p.reader.Read(pub.URL)
+	posts, err := p.reader.Read(pub.URL)
+	if err != nil {
+		return err
+	}
+
 	for _, post := range posts {
 		pub = p.addUniquePost(pub, post)
 	}
 
 	pub.FetchedAt = time.Now()
 	p.Add(pub)
+
 	return nil
 }
 

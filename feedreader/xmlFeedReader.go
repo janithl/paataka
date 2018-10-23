@@ -28,26 +28,23 @@ type XMLFeedReader struct {
 }
 
 // Read is the read function
-func (x XMLFeedReader) Read(url string) []entities.Post {
+func (x XMLFeedReader) Read(url string) ([]entities.Post, error) {
 	posts := []entities.Post{}
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return posts
+		return posts, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return posts
+		return posts, err
 	}
 
 	feed := feed{}
 	if err := xml.Unmarshal([]byte(body), &feed); err != nil {
-		fmt.Println("Error: ", err)
-		return posts
+		return posts, err
 	}
 
 	for _, post := range feed.Items {
@@ -62,12 +59,12 @@ func (x XMLFeedReader) Read(url string) []entities.Post {
 		} else if pubDate, err = time.Parse(time.RFC1123Z, post.PubDate); err == nil {
 			postEntity.CreatedAt = pubDate
 		} else {
-			fmt.Println(err)
+			fmt.Println("Warning:", err)
 			postEntity.CreatedAt = time.Now()
 		}
 
 		posts = append(posts, postEntity)
 	}
 
-	return posts
+	return posts, nil
 }

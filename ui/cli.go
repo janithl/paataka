@@ -227,7 +227,7 @@ func (c *CLI) feedFetchWorker(id int, jobs <-chan entities.Publication, results 
 	for pub := range jobs {
 		err := c.PublicationService.FetchPublicationPosts(pub)
 		if err != nil {
-			results <- fmt.Sprintf("[Worker %d] Error fetching feed %q", id, pub.Title)
+			results <- fmt.Sprintf("[Worker %d] Error fetching feed %q: %s", id, pub.Title, err.Error())
 		} else {
 			results <- fmt.Sprintf("[Worker %d] Fetched feed %q", id, pub.Title)
 		}
