@@ -2,7 +2,9 @@
 
 # Paataka
 
-A simple newsreader written in golang, currently CLI-based
+A simple newsreader written in golang, currently has a CLI and a REST API.
+
+[![GoDoc](https://godoc.org/github.com/janithl/paataka?status.svg)](https://godoc.org/github.com/janithl/paataka)
 
 ## Features
 
@@ -17,7 +19,8 @@ notes and binaries for Linux and Mac OS
 
 ## Running/Building
 
-Run `go run paataka.go` to run, and `go build paataka.go` to compile a binary
+Run `go run paataka.go` to run as a CLI, and `go run paataka.go -http` to run
+the REST API. Run `go build paataka.go` to compile a binary.
 
 I use go's amazing built-in cross-compilation to build for different OSes and
 architectures. For example to build for Linux 386:
