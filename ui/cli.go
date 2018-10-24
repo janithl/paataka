@@ -1,3 +1,5 @@
+// Package ui contains implementations of the UI concern, and belong to
+// the infrastructure layer
 package ui
 
 import (

@@ -185,8 +185,60 @@ func TestFetchPublicationPostsAddAndListAll(t *testing.T) {
 			// check if all the posts are matching
 			got, want := matches, len(mockFeedReader.Posts)
 			if got != want {
-				t.Errorf("got '%d' mathces, want '%d'", got, want)
+				t.Errorf("got '%d' matches, want '%d'", got, want)
 			}
 		})
+	}
+}
+
+/*
+	given publication is in repository:
+		{Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	and publication's feed has 3 posts on it:
+		{Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"}
+		{Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"}
+		{Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"}
+		{Title: "Hello Japan", URL: "https://alberta.ca/blog/004/hello-japan"}
+	and FetchPublicationPosts has been called
+	when Search is called for Posts with query term "hello"
+	then the Posts "Hello World" and "Hello Japan" should be returned
+*/
+func TestFetchPublicationPostsAddAndSearch(t *testing.T) {
+	mockFeedReader := MockFeedReader{}
+
+	// create a slice of posts and assign it to the mock FeedReader
+	mockFeedReader.Posts = []entities.Post{
+		entities.Post{Title: "Hello World", URL: "https://alberta.ca/blog/001/hello-world"},
+		entities.Post{Title: "Yesterday", URL: "https://alberta.ca/blog/002/yesterday"},
+		entities.Post{Title: "Another Day", URL: "https://alberta.ca/blog/003/another-day"},
+		entities.Post{Title: "Hello Japan", URL: "https://alberta.ca/blog/004/hello-japan"},
+	}
+
+	// setup service
+	service := setupService(version, mockFeedReader)
+
+	// create new publication
+	publication := entities.Publication{Title: "Alberta Blog", URL: "https://alberta.ca/blog"}
+	publication.ID = service.Add(publication)
+
+	// fetch posts for the publication
+	service.FetchPublicationPosts(publication)
+
+	// search for hello
+	results := service.Search("Post", "hello")
+
+	// check if 2 posts are returned
+	got, want := len(results), 2
+	if got != want {
+		t.Errorf("got '%d' matches, want '%d'", got, want)
+	}
+
+	// search for yesterday
+	results = service.Search("Post", "yesterday")
+
+	// check if 1 post is returned
+	got, want = len(results), 1
+	if got != want {
+		t.Errorf("got '%d' matches, want '%d'", got, want)
 	}
 }

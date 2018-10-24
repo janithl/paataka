@@ -1,3 +1,5 @@
+// Package web contains implementations of the API, and belong to
+// the infrastructure layer
 package web
 
 import (

@@ -1,3 +1,5 @@
+// Package feedreader contains implementations of the FeedReader
+// interface, and belongs to the infrastructure layer
 package feedreader
 
 import (
@@ -27,7 +29,8 @@ type feed struct {
 type XMLFeedReader struct {
 }
 
-// Read is the read function
+// Read is the read function, which reads an RSS feed and returns
+// a slice of Post entities
 func (x XMLFeedReader) Read(url string) ([]entities.Post, error) {
 	posts := []entities.Post{}
 
