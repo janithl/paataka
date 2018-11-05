@@ -197,7 +197,8 @@ func (c *CLI) viewPost(post entities.Post) {
 		fmt.Println()
 		fmt.Println("Similar Posts:")
 		for index, post := range posts[1:] {
-			fmt.Printf("[%d] %s\n", index, &post)
+			fmt.Printf("[%d] %-56s %19s\n", index, c.truncate(post.Title, 56),
+				post.CreatedAt.Format("2006-01-02 03:04PM"))
 		}
 		fmt.Println()
 	}
