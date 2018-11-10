@@ -1,22 +1,106 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>Paataka</title>
+    <link
+      rel="stylesheet"
+      href="https://bootswatch.com/4/litera/bootstrap.min.css"
+    />
+    <style>
+      /* Show it is fixed to the top */
+      body {
+        min-height: 75rem;
+        padding-top: 4.5rem;
+      }
+    </style>
   </head>
 
   <body>
     <div id="app">
-      <ol>
-        <li v-for="pub in publications">
-          <a v-bind:href="'publication/' + pub.id">
-            {{ pub.title }} ({{ pub.post_count }} Posts)
-          </a>
-        </li>
-      </ol>
-    </div>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <router-link class="navbar-brand" to="/">Paataka</router-link>
+      </nav>
+      <main role="main" class="container">
+        <h1>Publications</h1>
+        <div class="row">
+          <div class="col-sm-4">
+            <ul class="list-group">
+              <li
+                v-for="pub in publications"
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <router-link :to="'/publication/' + pub.id">
+                  {{ pub.title }}
+                </router-link>
 
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+                <span class="badge badge-info badge-pill">
+                  {{ pub.post_count }} Posts
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div class="col-sm-8"><router-view></router-view></div>
+        </div>
+      </main>
+    </div>
+    <script src="https://unpkg.com/vue/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/vue-router/dist/vue-router.min.js"></script>
+    <script type="text/x-template" id="publication">
+        <div v-if="publication" class="card">
+          <div class="card-body">
+          <h4 class="card-title">{{ publication.title }}</h4>
+          <h6 class="card-subtitle mb-2 text-muted"><a :href="publication.url">{{ publication.url }}</h6>
+          <p class="card-text"></p>
+          <router-link class="card-link" to="/">Back</router-link>
+          </div>
+      </div>
+    </script>
     <script>
-      var app = new Vue({
+      function fetchData(endpoint, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", endpoint);
+        xhr.onload = function() {
+          callback(JSON.parse(xhr.responseText));
+        };
+        xhr.send();
+      }
+
+      const Publication = {
+        data: function() {
+          return {
+            publication: {}
+          };
+        },
+        created: function() {
+          this.fetchPublication();
+        },
+        watch: {
+          $route: "fetchPublication"
+        },
+        methods: {
+          fetchPublication(resource) {
+            var self = this;
+            fetchData("/publication/" + this.$route.params.id, response => {
+              self.publication = response;
+            });
+          }
+        },
+        template: "#publication"
+      };
+
+      const routes = [{ path: "/publication/:id", component: Publication }];
+
+      const router = new VueRouter({
+        routes
+      });
+
+      const app = new Vue({
+        router,
         el: "#app",
         data: {
           publications: []
@@ -26,17 +110,13 @@
         },
         methods: {
           fetchPublications(resource) {
-            var xhr = new XMLHttpRequest();
             var self = this;
-            xhr.open("GET", "/publications");
-            xhr.onload = function() {
-              var response = JSON.parse(xhr.responseText);
+            fetchData("/publications", response => {
               self.publications = response.publications;
-            };
-            xhr.send();
+            });
           }
         }
-      });
+      }).$mount("#app");
     </script>
   </body>
 </html>
