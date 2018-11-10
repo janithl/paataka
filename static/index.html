@@ -1,24 +1,42 @@
 <html>
-
-<head>
+  <head>
     <title>Paataka</title>
-</head>
+  </head>
 
-<body onload="loadData()">
-    <div id="app"></div>
+  <body>
+    <div id="app">
+      <ol>
+        <li v-for="pub in publications">
+          <a v-bind:href="'publication/' + pub.id">
+            {{ pub.title }} ({{ pub.post_count }} Posts)
+          </a>
+        </li>
+      </ol>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <script>
-        function loadData() {
-            fetch('./publications').then(data => data.json())
-                .then(json => {
-                    let pubs = [];
-                    for (pub of json.publications) {
-                        pubs.push(`<a href="publication/${pub.id}"><li>${pub.title} (${pub.post_count} posts)</li></a>`);
-                    }
-                    document.getElementById('app').innerHTML = '<ul>' + pubs.join('\n') + '</ul>';
-                })
-                .catch(error => console.error(error));
+      var app = new Vue({
+        el: "#app",
+        data: {
+          publications: []
+        },
+        created: function() {
+          this.fetchPublications();
+        },
+        methods: {
+          fetchPublications(resource) {
+            var xhr = new XMLHttpRequest();
+            var self = this;
+            xhr.open("GET", "/publications");
+            xhr.onload = function() {
+              var response = JSON.parse(xhr.responseText);
+              self.publications = response.publications;
+            };
+            xhr.send();
+          }
         }
+      });
     </script>
-</body>
-
+  </body>
 </html>
