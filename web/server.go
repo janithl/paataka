@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"strconv"
 
 	"github.com/janithl/paataka/usecases"
 )
@@ -67,6 +68,54 @@ func (s *Server) listPublicationDetails() http.HandlerFunc {
 	}
 }
 
+func (s *Server) listSearchResults() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		page, size, search := 0, 10, ""
+		query := r.URL.Query()
+		pageQuery, ok := query["page"]
+		if ok {
+			page, _ = strconv.Atoi(pageQuery[0])
+		}
+
+		sizeQuery, ok := query["size"]
+		if ok {
+			size, _ = strconv.Atoi(sizeQuery[0])
+		}
+
+		searchQuery, ok := query["q"]
+		if ok {
+			search = searchQuery[0]
+		}
+
+		posts := PostList{Page: page, PageSize: size}
+		if results := s.PublicationService.Search("Post", search); len(results) > 0 {
+			ids := make([]string, 0)
+			for _, res := range results {
+				ids = append(ids, res.ID)
+			}
+
+			postObjects := s.PublicationService.GetPosts(ids)
+
+			start := page * size
+			end := (page + 1) * size
+
+			if start > len(postObjects) || page < 0 || size < 1 {
+				http.Error(w, "Incorrect Page or Size values", http.StatusBadRequest)
+				return
+			} else if end > len(postObjects) {
+				end = len(postObjects)
+			}
+
+			for _, post := range postObjects[start:end] {
+				posts.Posts = append(posts.Posts, Post{ID: post.ID, Title: post.Title, URL: post.URL})
+			}
+			posts.TotalSize = len(results)
+		}
+
+		s.outputJSON(w, posts)
+	}
+}
+
 func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	fp := path.Join("static", "index.html")
 	http.ServeFile(w, r, fp)
@@ -77,6 +126,7 @@ func (s *Server) Serve() {
 	// define the routes
 	http.HandleFunc("/publications", s.listPublications())
 	http.HandleFunc("/publication/", s.listPublicationDetails())
+	http.HandleFunc("/search", s.listSearchResults())
 	http.HandleFunc("/version", s.version())
 	http.HandleFunc("/", s.defaultHandler)
 
