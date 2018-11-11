@@ -8,8 +8,10 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"sort"
 	"strconv"
 
+	"github.com/janithl/paataka/entities"
 	"github.com/janithl/paataka/usecases"
 )
 
@@ -116,6 +118,58 @@ func (s *Server) listSearchResults() http.HandlerFunc {
 	}
 }
 
+func (s *Server) listLatestPosts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		page, size := 0, 10
+		query := r.URL.Query()
+		pageQuery, ok := query["page"]
+		if ok {
+			page, _ = strconv.Atoi(pageQuery[0])
+		}
+
+		sizeQuery, ok := query["size"]
+		if ok {
+			size, _ = strconv.Atoi(sizeQuery[0])
+		}
+
+		pubs := s.PublicationService.ListAll()
+		postObjects := []entities.Post{}
+
+		for _, pub := range pubs {
+			for _, post := range pub.Posts {
+				postObjects = append(postObjects, post)
+			}
+		}
+
+		if len(postObjects) == 0 {
+			http.Error(w, "No Posts Yet", http.StatusNoContent)
+			return
+		}
+
+		sort.Slice(postObjects, func(i, j int) bool {
+			return postObjects[i].CreatedAt.After(postObjects[j].CreatedAt)
+		})
+
+		posts := PostList{Page: page, PageSize: size}
+		start := page * size
+		end := (page + 1) * size
+
+		if start > len(postObjects) || page < 0 || size < 1 {
+			http.Error(w, "Incorrect Page or Size values", http.StatusBadRequest)
+			return
+		} else if end > len(postObjects) {
+			end = len(postObjects)
+		}
+
+		for _, post := range postObjects[start:end] {
+			posts.Posts = append(posts.Posts, Post{ID: post.ID, Title: post.Title, URL: post.URL, CreatedAt: post.CreatedAt})
+		}
+		posts.TotalSize = len(postObjects)
+
+		s.outputJSON(w, posts)
+	}
+}
+
 func (s *Server) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	fp := path.Join("static", "index.html")
 	http.ServeFile(w, r, fp)
@@ -127,6 +181,7 @@ func (s *Server) Serve() {
 	http.HandleFunc("/publications", s.listPublications())
 	http.HandleFunc("/publication/", s.listPublicationDetails())
 	http.HandleFunc("/search", s.listSearchResults())
+	http.HandleFunc("/latest", s.listLatestPosts())
 	http.HandleFunc("/version", s.version())
 	http.HandleFunc("/", s.defaultHandler)
 

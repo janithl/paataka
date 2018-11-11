@@ -82,20 +82,20 @@
       </div>
     </script>
 
-    <script type="text/x-template" id="search">
-      <div v-if="results">
-        <h1>Search Results</h1>
+    <script type="text/x-template" id="post-list">
+      <div v-if="posts">
+        <h1>{{ title }}</h1>
         <div class="list-group">
-          <a v-for="result in results" :href="result.url" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
+          <a v-for="post in posts" :href="post.url" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class="d-flex w-100 justify-content-between">
-              <h5 class="mb-1">{{ result.title }}</h5>
-              <pub-date :created_at="result.created_at"></pub-date>
+              <h5 class="mb-1">{{ post.title }}</h5>
+              <pub-date :created_at="post.created_at"></pub-date>
             </div>
             <p class="mb-1"></p>
-            <small class="text-muted">{{ result.url }}</small>
+            <small class="text-muted">{{ post.url }}</small>
           </a>
         </div>
-        <pagination :current="page()" :size="size" :total="total"></pagination>
+        <pagination :subroute="subroute" :current="page()" :size="size" :total="total"></pagination>
       </div>
     </script>
 
@@ -103,13 +103,13 @@
       <div class="my-3">
         <ul class="pagination pagination-sm justify-content-center">
           <li class="page-item" v-bind:class="{ disabled: current == 0 }">
-            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (current - 1)">&laquo;</router-link>
+            <router-link class="page-link" :to="[subroute, $route.params.query, (current - 1)].join('/')">&laquo;</router-link>
           </li>
           <li v-for="n in pages()" class="page-item" v-bind:class="{ active: n - 1 == current }">
-            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (n - 1)">{{ n }}</router-link>
+            <router-link class="page-link" :to="[subroute, $route.params.query, (n - 1)].join('/')">{{ n }}</router-link>
           </li>
           <li class="page-item" v-bind:class="{ disabled: current == pages() - 1 }">
-            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (current - 1 + 2)">&raquo;</router-link>
+            <router-link class="page-link" :to="[subroute, $route.params.query, (current - 1 + 2)].join('/')">&raquo;</router-link>
           </li>
         </ul>
       </div>
@@ -158,6 +158,10 @@
 
       Vue.component("pagination", {
         props: {
+          subroute: {
+            type: String,
+            required: true
+          },
           current: {
             type: Number,
             required: true
@@ -177,6 +181,55 @@
           }
         },
         template: "#pagination"
+      });
+
+      Vue.component("post-list", {
+        data: function() {
+          return {
+            posts: [],
+            total: 0
+          };
+        },
+        props: {
+          title: {
+            type: String,
+            required: true
+          },
+          endpoint: {
+            type: String,
+            required: true
+          },
+          subroute: {
+            type: String,
+            required: true
+          },
+          size: {
+            type: Number,
+            required: true
+          }
+        },
+        created: function() {
+          this.fetchPosts();
+        },
+        watch: {
+          $route: "fetchPosts"
+        },
+        methods: {
+          page() {
+            return this.$route.params.page || 0;
+          },
+          fetchPosts(resource) {
+            let self = this;
+            fetchData(
+              this.endpoint + "&page=" + this.page() + "&size=" + this.size,
+              response => {
+                self.posts = response.posts;
+                self.total = response.total_size;
+              }
+            );
+          }
+        },
+        template: "#post-list"
       });
 
       const Publication = {
@@ -226,13 +279,6 @@
       };
 
       const Search = {
-        data: function() {
-          return {
-            results: [],
-            size: 10,
-            total: 0
-          };
-        },
         created: function() {
           this.fetchSearch();
         },
@@ -240,29 +286,26 @@
           $route: "fetchSearch"
         },
         methods: {
-          page() {
-            return this.$route.params.page || 0;
-          },
-          fetchSearch(resource) {
-            let self = this;
-            fetchData(
-              "/search?q=" +
-                this.$route.params.query +
-                "&page=" +
-                this.page() +
-                "&size=" +
-                this.size,
-              response => {
-                self.results = response.posts;
-                self.total = response.total_size;
-              }
-            );
+          fetchSearch() {
+            return "/search?q=" + this.$route.params.query;
           }
         },
-        template: "#search"
+        template: `<post-list title="Search Results" subroute="/search" :endpoint="fetchSearch()" size=10></post-list>`
+      };
+
+      const LatestPosts = {
+        template: `<post-list title="Latest Posts" subroute="/latest" endpoint="/latest?" size=25></post-list>`
       };
 
       const routes = [
+        {
+          path: "/",
+          component: LatestPosts
+        },
+        {
+          path: "/latest//:page",
+          component: LatestPosts
+        },
         {
           path: "/publications",
           component: PublicationList
