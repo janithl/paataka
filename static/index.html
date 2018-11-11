@@ -28,9 +28,12 @@
         <div class="collapse navbar-collapse" id="navbarColor02">
           <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-              <a class="nav-link" href="#/">
-                Publications <span class="sr-only">(current)</span>
-              </a>
+              <router-link class="nav-link" to="/publications">
+                Publications
+                <span v-if="$router.current == 'publications'" class="sr-only">
+                  (current)
+                </span>
+              </router-link>
             </li>
           </ul>
           <form @submit.prevent="search" class="form-inline my-2 my-lg-0">
@@ -44,27 +47,8 @@
           </form>
         </div>
       </nav>
-      <main role="main" class="container">
-        <h1>Publications</h1>
-        <div class="row">
-          <div class="col-sm-4">
-            <ul class="list-group">
-              <li
-                v-for="pub in publications"
-                class="list-group-item d-flex justify-content-between align-items-center"
-              >
-                <router-link :to="'/publication/' + pub.id">
-                  {{ pub.title }}
-                </router-link>
-
-                <span class="badge badge-info badge-pill">
-                  {{ pub.post_count }} Posts
-                </span>
-              </li>
-            </ul>
-          </div>
-          <div class="col-sm-8"><router-view></router-view></div>
-        </div>
+      <main role="main" class="container my-3">
+        <router-view></router-view>
       </main>
     </div>
     <script src="https://unpkg.com/vue/dist/vue.min.js"></script>
@@ -75,13 +59,32 @@
           <h4 class="card-title">{{ publication.title }}</h4>
           <h6 class="card-subtitle mb-2 text-muted"><a :href="publication.url">{{ publication.url }}</h6>
             <p class="card-text"></p>
-            <router-link class="card-link" to="/">Back</router-link>
           </div>
         </div>
     </script>
+
+    <script type="text/x-template" id="publications-list">
+      <div v-if="publications">
+        <h1>Publications</h1>
+        <ul class="list-group">
+          <li
+            v-for="pub in publications"
+            class="list-group-item d-flex justify-content-between align-items-center"
+          >
+            <router-link :to="'/publication/' + pub.id">
+              {{ pub.title }}
+            </router-link>
+            <span class="badge badge-info badge-pill">
+              {{ pub.post_count }} Posts
+            </span>
+          </li>
+        </ul>
+      </div>
+    </script>
+
     <script type="text/x-template" id="search">
       <div v-if="results">
-        <h2>Search Results</h2>
+        <h1>Search Results</h1>
         <div class="list-group">
           <a v-for="result in results" :href="result.url" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class="d-flex w-100 justify-content-between">
@@ -92,8 +95,26 @@
             <small class="text-muted">{{ result.url }}</small>
           </a>
         </div>
+        <pagination :current="page()" :size="size" :total="total"></pagination>
       </div>
     </script>
+
+    <script type="text/x-template" id="pagination">
+      <div class="my-3">
+        <ul class="pagination pagination-sm justify-content-center">
+          <li class="page-item" v-bind:class="{ disabled: current == 0 }">
+            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (current - 1)">&laquo;</router-link>
+          </li>
+          <li v-for="n in pages()" class="page-item" v-bind:class="{ active: n - 1 == current }">
+            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (n - 1)">{{ n }}</router-link>
+          </li>
+          <li class="page-item" v-bind:class="{ disabled: current == pages() - 1 }">
+            <router-link class="page-link" :to="'/search/' + $route.params.query + '/' + (current - 1 + 2)">&raquo;</router-link>
+          </li>
+        </ul>
+      </div>
+    </script>
+
     <script>
       function fetchData(endpoint, callback) {
         var xhr = new XMLHttpRequest();
@@ -135,6 +156,29 @@
         template: `<small :title="createdAt()" class="text-muted">{{ humanDate() }}</small>`
       });
 
+      Vue.component("pagination", {
+        props: {
+          current: {
+            type: Number,
+            required: true
+          },
+          size: {
+            type: Number,
+            required: true
+          },
+          total: {
+            type: Number,
+            required: true
+          }
+        },
+        methods: {
+          pages: function() {
+            return Math.ceil(this.total / this.size);
+          }
+        },
+        template: "#pagination"
+      });
+
       const Publication = {
         data: function() {
           return {
@@ -158,10 +202,35 @@
         template: "#publication"
       };
 
+      const PublicationList = {
+        data: function() {
+          return {
+            publications: []
+          };
+        },
+        created: function() {
+          this.fetchPublicationList();
+        },
+        watch: {
+          $route: "fetchPublicationList"
+        },
+        methods: {
+          fetchPublicationList(resource) {
+            var self = this;
+            fetchData("/publications", response => {
+              self.publications = response.publications;
+            });
+          }
+        },
+        template: "#publications-list"
+      };
+
       const Search = {
         data: function() {
           return {
-            results: []
+            results: [],
+            size: 10,
+            total: 0
           };
         },
         created: function() {
@@ -171,11 +240,23 @@
           $route: "fetchSearch"
         },
         methods: {
+          page() {
+            return this.$route.params.page || 0;
+          },
           fetchSearch(resource) {
-            var self = this;
-            fetchData("/search?q=" + this.$route.params.query, response => {
-              self.results = response.posts;
-            });
+            let self = this;
+            fetchData(
+              "/search?q=" +
+                this.$route.params.query +
+                "&page=" +
+                this.page() +
+                "&size=" +
+                this.size,
+              response => {
+                self.results = response.posts;
+                self.total = response.total_size;
+              }
+            );
           }
         },
         template: "#search"
@@ -183,12 +264,16 @@
 
       const routes = [
         {
+          path: "/publications",
+          component: PublicationList
+        },
+        {
           path: "/publication/:id",
           component: Publication
         },
         {
           name: "search",
-          path: "/search/:query",
+          path: "/search/:query/:page",
           component: Search
         }
       ];
@@ -201,23 +286,13 @@
         router,
         el: "#app",
         data: {
-          query: "",
-          publications: []
-        },
-        created: function() {
-          this.fetchPublications();
+          query: ""
         },
         methods: {
-          fetchPublications(resource) {
-            var self = this;
-            fetchData("/publications", response => {
-              self.publications = response.publications;
-            });
-          },
           search(resource) {
             this.$router.push({
               name: "search",
-              params: { query: this.query }
+              params: { query: this.query, page: 0 }
             });
           }
         }
