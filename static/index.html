@@ -24,6 +24,25 @@
     <div id="app">
       <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
         <router-link class="navbar-brand" to="/">Paataka</router-link>
+
+        <div class="collapse navbar-collapse" id="navbarColor02">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#/">
+                Publications <span class="sr-only">(current)</span>
+              </a>
+            </li>
+          </ul>
+          <form @submit.prevent="search" class="form-inline my-2 my-lg-0">
+            <input
+              v-model="query"
+              class="form-control mr-sm-2"
+              type="text"
+              placeholder="Search"
+              default="true"
+            />
+          </form>
+        </div>
       </nav>
       <main role="main" class="container">
         <h1>Publications</h1>
@@ -51,13 +70,28 @@
     <script src="https://unpkg.com/vue/dist/vue.min.js"></script>
     <script src="https://unpkg.com/vue-router/dist/vue-router.min.js"></script>
     <script type="text/x-template" id="publication">
-        <div v-if="publication" class="card">
-          <div class="card-body">
+      <div v-if="publication" class="card">
+        <div class="card-body">
           <h4 class="card-title">{{ publication.title }}</h4>
           <h6 class="card-subtitle mb-2 text-muted"><a :href="publication.url">{{ publication.url }}</h6>
-          <p class="card-text"></p>
-          <router-link class="card-link" to="/">Back</router-link>
+            <p class="card-text"></p>
+            <router-link class="card-link" to="/">Back</router-link>
           </div>
+        </div>
+    </script>
+    <script type="text/x-template" id="search">
+      <div v-if="results">
+        <h2>Search Results</h2>
+        <div class="list-group">
+          <a v-for="result in results" :href="result.url" target="_blank" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">{{ result.title }}</h5>
+              <pub-date :created_at="result.created_at"></pub-date>
+            </div>
+            <p class="mb-1"></p>
+            <small class="text-muted">{{ result.url }}</small>
+          </a>
+        </div>
       </div>
     </script>
     <script>
@@ -69,6 +103,37 @@
         };
         xhr.send();
       }
+
+      const msPerHour = 3600 * 1000;
+      Vue.component("pub-date", {
+        props: {
+          created_at: {
+            type: String,
+            required: true
+          }
+        },
+        methods: {
+          humanDate: function() {
+            let createdAt = new Date(this.created_at);
+            let diffHour = (new Date() - createdAt) / msPerHour;
+            let diffDay = diffHour / 24;
+
+            if (diffHour < 1.5) {
+              return "An hour ago";
+            } else if (diffHour < 36) {
+              return Math.round(diffHour) + " hours ago";
+            } else if (diffDay < 30) {
+              return Math.round(diffDay) + " days ago";
+            } else {
+              return createdAt.toLocaleDateString();
+            }
+          },
+          createdAt: function() {
+            return new Date(this.created_at).toLocaleString();
+          }
+        },
+        template: `<small :title="createdAt()" class="text-muted">{{ humanDate() }}</small>`
+      });
 
       const Publication = {
         data: function() {
@@ -93,7 +158,40 @@
         template: "#publication"
       };
 
-      const routes = [{ path: "/publication/:id", component: Publication }];
+      const Search = {
+        data: function() {
+          return {
+            results: []
+          };
+        },
+        created: function() {
+          this.fetchSearch();
+        },
+        watch: {
+          $route: "fetchSearch"
+        },
+        methods: {
+          fetchSearch(resource) {
+            var self = this;
+            fetchData("/search?q=" + this.$route.params.query, response => {
+              self.results = response.posts;
+            });
+          }
+        },
+        template: "#search"
+      };
+
+      const routes = [
+        {
+          path: "/publication/:id",
+          component: Publication
+        },
+        {
+          name: "search",
+          path: "/search/:query",
+          component: Search
+        }
+      ];
 
       const router = new VueRouter({
         routes
@@ -103,6 +201,7 @@
         router,
         el: "#app",
         data: {
+          query: "",
           publications: []
         },
         created: function() {
@@ -113,6 +212,12 @@
             var self = this;
             fetchData("/publications", response => {
               self.publications = response.publications;
+            });
+          },
+          search(resource) {
+            this.$router.push({
+              name: "search",
+              params: { query: this.query }
             });
           }
         }

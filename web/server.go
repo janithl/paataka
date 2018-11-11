@@ -107,7 +107,7 @@ func (s *Server) listSearchResults() http.HandlerFunc {
 			}
 
 			for _, post := range postObjects[start:end] {
-				posts.Posts = append(posts.Posts, Post{ID: post.ID, Title: post.Title, URL: post.URL})
+				posts.Posts = append(posts.Posts, Post{ID: post.ID, Title: post.Title, URL: post.URL, CreatedAt: post.CreatedAt})
 			}
 			posts.TotalSize = len(results)
 		}

@@ -1,10 +1,13 @@
 package web
 
+import "time"
+
 // Post type for communicating JSON of Posts
 type Post struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	URL   string `json:"url"`
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // PostList type for managing lists of Posts
